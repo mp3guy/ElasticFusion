@@ -70,20 +70,13 @@ The GUI (*ElasticFusion*) can take a bunch of parameters when launching it from 
 Essentially by default *./ElasticFusion* will try run off an attached ASUS sensor live. You can provide a .klg log file instead with the -l parameter. You can capture .klg format logs using either [Logger1](https://github.com/mp3guy/Logger1) or [Logger2](https://github.com/mp3guy/Logger2). 
 
 # 4. How do I just use the Core API? #
-The libefusion.so shared library which gets built by the Core is what you want to link against. Note, while configuring cmake for the Core the [efusion_SHADER_DIR] variable needs to be correctly set to the Core/src/Shaders directory on your machine, wherever that is.
+The libefusion.so shared library which gets built by the Core is what you want to link against.
 
-An example of this can be seen in the GUI code, however I'll add a minimal example here. First, you want to include these two commands in your projects CMakeLists.txt file:
+An example of this can be seen in the GUI code. Essentially all you need to do is utilise the provided Findefusion.cmake file in GUI/src and include the following in your CMakeLists.txt file:
 
-    set(efusion_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Core/src" CACHE PATH "Where ElasticFusion.h lives")
-    set(efusion_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/../../Core/build/libefusion.so" CACHE FILEPATH "Where libefusion.so lives")
-    
-Also add this:
-
-    include_directories(${efusion_INCLUDE_DIR})
-    
-And make sure to link against the efusion library:
-
-    target_link_libraries(MyProject ${efusion_LIBRARY} ...)
+    find_package(efusion REQUIRED)
+    include_directories(${EFUSION_INCLUDE_DIR})
+    target_link_libraries(MyProject ${EFUSION_LIBRARY})
     
 To then use the Core API, make sure to include the header file in your source file:
 ```cpp

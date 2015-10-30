@@ -27,6 +27,8 @@ sudo apt-get install -y cmake-qt-gui git build-essential libusb-1.0-0-dev libude
 
 Afterwards install [OpenNI2](https://github.com/occipital/OpenNI2) and [Pangolin](https://github.com/stevenlovegrove/Pangolin) from source. It is important to build Pangolin last so that it can find some of the libraries it has optional dependencies on. 
 
+When you have all of the dependencies installed, build the Core followed by the GUI. 
+
 # 2. Is there an easier way to build it? #
 Yes, if you run the *build.sh* script on a fresh clean install of Ubuntu 14.04 or 15.04, enter your password for sudo a few times and wait a few minutes all dependencies will get downloaded and installed and it should build everything correctly. This has not been tested on anything but fresh installs, so I would advise using it with caution if you already have some of the dependencies installed. 
 

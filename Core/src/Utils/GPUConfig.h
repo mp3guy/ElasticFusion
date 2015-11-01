@@ -90,6 +90,11 @@ class GPUConfig
             rgbResMap["GeForce GTX 675MX"] = std::pair<int, int>(128, 80);
             so3StepMap["GeForce GTX 675MX"] = std::pair<int, int>(128, 32);
 
+            icpStepMap["Quadro K620M"] = std::pair<int, int>(32, 48);
+            rgbStepMap["Quadro K620M"] = std::pair<int, int>(128, 16);
+            rgbResMap["Quadro K620M"] = std::pair<int, int>(448, 48);
+            so3StepMap["Quadro K620M"] = std::pair<int, int>(32, 48);
+
             if(icpStepMap.find(dev) == icpStepMap.end())
             {
                 std::stringstream strs;

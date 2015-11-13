@@ -610,7 +610,7 @@ Eigen::Vector4f * GlobalModel::downloadMap()
 
     memset(&vertices[0], 0, count * Vertex::SIZE);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[target].first);
+    glBindBuffer(GL_ARRAY_BUFFER, vbos[renderSource].first);
 
     glGetBufferSubData(GL_ARRAY_BUFFER, 0, count * Vertex::SIZE, vertices);
 

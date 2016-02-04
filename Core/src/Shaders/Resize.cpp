@@ -84,6 +84,8 @@ void Resize::image(GPUTexture * source, Img<Eigen::Matrix<unsigned char, 3, 1>> 
 
     glDrawArrays(GL_POINTS, 0, 1);
 
+    glReadPixels(0, 0, imageRenderBuffer.width, imageRenderBuffer.height, GL_RGB, GL_UNSIGNED_BYTE, dest.data);
+
     imageFrameBuffer.Unbind();
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -93,8 +95,6 @@ void Resize::image(GPUTexture * source, Img<Eigen::Matrix<unsigned char, 3, 1>> 
     imageProgram->Unbind();
 
     glPopAttrib();
-
-    imageTexture.texture->Download(dest.data, GL_RGB, GL_UNSIGNED_BYTE);
 
     glFinish();
 }
@@ -119,6 +119,8 @@ void Resize::vertex(GPUTexture * source, Img<Eigen::Vector4f> & dest)
 
     glDrawArrays(GL_POINTS, 0, 1);
 
+    glReadPixels(0, 0, vertexRenderBuffer.width, vertexRenderBuffer.height, GL_RGBA, GL_FLOAT, dest.data);
+
     vertexFrameBuffer.Unbind();
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -128,8 +130,6 @@ void Resize::vertex(GPUTexture * source, Img<Eigen::Vector4f> & dest)
     vertexProgram->Unbind();
 
     glPopAttrib();
-
-    vertexTexture.texture->Download(dest.data, GL_RGBA, GL_FLOAT);
 
     glFinish();
 }
@@ -154,6 +154,8 @@ void Resize::time(GPUTexture * source, Img<unsigned short> & dest)
 
     glDrawArrays(GL_POINTS, 0, 1);
 
+    glReadPixels(0, 0, timeRenderBuffer.width, timeRenderBuffer.height, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_SHORT, dest.data);
+
     timeFrameBuffer.Unbind();
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -163,8 +165,6 @@ void Resize::time(GPUTexture * source, Img<unsigned short> & dest)
     timeProgram->Unbind();
 
     glPopAttrib();
-
-    timeTexture.texture->Download(dest.data, GL_LUMINANCE_INTEGER_EXT, GL_UNSIGNED_SHORT);
 
     glFinish();
 }

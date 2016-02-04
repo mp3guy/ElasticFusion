@@ -48,6 +48,9 @@ class GUI
 
             pangolin::CreateWindowAndBind("Main", width, height, windowParams);
 
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
             //Internally render at 3840x2160
             renderBuffer = new pangolin::GlRenderBuffer(3840, 2160),
             colorTexture = new GPUTexture(renderBuffer->width, renderBuffer->height, GL_RGBA32F, GL_LUMINANCE, GL_FLOAT, true);

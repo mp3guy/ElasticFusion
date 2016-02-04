@@ -512,10 +512,7 @@ struct RGBReduction
     __device__ __forceinline__ JtJJtrSE3
     getProducts(int & i) const
     {
-        int y = i / cols;
-        int x = i - (y * cols);
-
-        const DataTerm & corresp = corresImg.ptr(y)[x];
+        const DataTerm & corresp = corresImg.data[i];
 
         bool found_coresp = corresp.valid;
 

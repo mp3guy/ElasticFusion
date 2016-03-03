@@ -610,11 +610,22 @@ Eigen::Vector4f * GlobalModel::downloadMap()
 
     memset(&vertices[0], 0, count * Vertex::SIZE);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbos[renderSource].first);
+    GLuint downloadVbo;
 
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, count * Vertex::SIZE, vertices);
-
+    glGenBuffers(1, &downloadVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, downloadVbo);
+    glBufferData(GL_ARRAY_BUFFER, bufferSize, 0, GL_STREAM_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_COPY_READ_BUFFER, vbos[renderSource].first);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, downloadVbo);
+
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, count * Vertex::SIZE);
+    glGetBufferSubData(GL_COPY_WRITE_BUFFER, 0, count * Vertex::SIZE, vertices);
+
+    glBindBuffer(GL_COPY_READ_BUFFER, 0);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+    glDeleteBuffers(1, &downloadVbo);
 
     glFinish();
 

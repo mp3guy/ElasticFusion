@@ -95,6 +95,11 @@ class GPUConfig
             rgbResMap["Quadro K620M"] = std::pair<int, int>(448, 48);
             so3StepMap["Quadro K620M"] = std::pair<int, int>(32, 48);
 
+            icpStepMap["GeForce GTX TITAN X"] = std::pair<int, int>(256, 96);
+            rgbStepMap["GeForce GTX TITAN X"] = std::pair<int, int>(256, 64);
+            rgbResMap["GeForce GTX TITAN X"] = std::pair<int, int>(96, 496);
+            so3StepMap["GeForce GTX TITAN X"] = std::pair<int, int>(432, 48);
+
             if(icpStepMap.find(dev) == icpStepMap.end())
             {
                 std::stringstream strs;

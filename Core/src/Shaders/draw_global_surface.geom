@@ -37,6 +37,8 @@ out vec3 vColor0;
 out vec3 v;
 out vec3 n;
 out vec2 texcoord;
+out float radius;
+flat out int unstablePoint;
 
 #include "color.glsl"
 
@@ -52,7 +54,7 @@ void main()
         {
             vColor0 = decodeColor(vColor[0].x);
         }
-        else if(colorType0[0] == 3 || vPosition[0].w <= threshold)
+        else if(colorType0[0] == 3)
         {
             vColor0 = vec3(vColor[0].z / float(vTime[0]));
             
@@ -75,6 +77,10 @@ void main()
         {
             vColor0 *= 0.25;
         }
+
+		unstablePoint = (vPosition[0].w <= threshold ? 1 : 0);
+		
+		radius = vNormRad[0].w;
         
         vec3 x = normalize(vec3((vNormRad[0].y - vNormRad[0].z), -vNormRad[0].x, vNormRad[0].x)) * vNormRad[0].w * 1.41421356;
         

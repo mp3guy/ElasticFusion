@@ -36,7 +36,7 @@ class GroundTruthOdometry
 
         virtual ~GroundTruthOdometry();
 
-        Eigen::Matrix4f getIncrementalTransformation(uint64_t timestamp);
+        Eigen::Matrix4f getTransformation(uint64_t timestamp);
 
         Eigen::MatrixXd getCovariance();
 

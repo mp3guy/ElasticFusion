@@ -258,7 +258,7 @@ void MainController::run()
                 {
                     currentPose = new Eigen::Matrix4f;
                     currentPose->setIdentity();
-                    *currentPose = groundTruthOdometry->getIncrementalTransformation(logReader->timestamp);
+                    *currentPose = groundTruthOdometry->getTransformation(logReader->timestamp);
                 }
 
                 eFusion->processFrame(logReader->rgb, logReader->depth, logReader->timestamp, currentPose, weightMultiplier);

@@ -56,7 +56,7 @@ void GroundTruthOdometry::loadTrajectory(const std::string & filename)
     }
 }
 
-Eigen::Matrix4f GroundTruthOdometry::getIncrementalTransformation(uint64_t timestamp)
+Eigen::Matrix4f GroundTruthOdometry::getTransformation(uint64_t timestamp)
 {
     Eigen::Matrix4f pose = Eigen::Matrix4f::Identity();
 
@@ -69,8 +69,6 @@ Eigen::Matrix4f GroundTruthOdometry::getIncrementalTransformation(uint64_t times
             return pose;
         }
 
-        Eigen::Isometry3f delta = camera_trajectory[last_utime].inverse() * camera_trajectory[timestamp];
-
         //Poses are stored in the file in iSAM basis, undo it
         Eigen::Matrix4f M;
         M <<  0,  0, 1, 0,
@@ -78,7 +76,7 @@ Eigen::Matrix4f GroundTruthOdometry::getIncrementalTransformation(uint64_t times
               0, -1, 0, 0,
               0,  0, 0, 1;
 
-        pose = M.inverse() * delta * M;
+        pose = M.inverse() * camera_trajectory[timestamp] * M;
     }
     else
     {

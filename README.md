@@ -142,3 +142,24 @@ No. The system relies on an extremely fast and tight coupling between the mappin
 ***This doesn't seem to work like it did in the videos/papers***
 
 A substantial amount of refactoring was carried out in order to open source this system, including rewriting a lot of functionality to avoid certain licenses and reduce dependencies. Although great care was taken during this process, it is possible that performance regressions were introduced and have not yet been discovered.
+
+# 7. Installation issues #
+
+***`#include <Eigen/Core>` not found***
+
+```bash
+ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
+ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
+```
+
+***invalid use of incomplete type ‘const struct Eigen ...***
+
+Pangolin must be installed AFTER all the other libraries to make use of optional dependencies
+
+***GLSL 3.30 is not supported. Supported versions are 1.10, 1.20, 1.30, 1.00 ES and 3.00 ES***
+
+Make sure you are running ElasticFusion on your NVIDIA GPU. In particular, if you have an Optimus GPU
+- If you use Prime, follow instructions [here](http://askubuntu.com/questions/661922/how-am-i-supposed-to-use-nvidia-prime)
+- If you use Bumblebee, remember to run as `optirun ./elasticFusion`
+
+

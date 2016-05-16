@@ -37,8 +37,8 @@ Yes, if you run the *build.sh* script on a fresh clean install of Ubuntu 14.04 o
 ***`#include <Eigen/Core>` not found***
 
 ```bash
-ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
-ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
+sudo ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen
+sudo ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
 ```
 
 ***invalid use of incomplete type ‘const struct Eigen ...***

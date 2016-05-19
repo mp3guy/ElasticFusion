@@ -5,8 +5,13 @@ project(GPUTest)
 find_package(Pangolin 0.1 REQUIRED)
 find_package(CUDA REQUIRED)
 
-set(efusion_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../Core/src" CACHE PATH "Where ElasticFusion.h lives")
-set(efusion_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/../../Core/build/libefusion.so" CACHE FILEPATH "Where libefusion.so lives")
+
+if(TARGET efusion)
+    set(efusion_LIBRARY efusion)
+    set(efusion_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}../../Core/src)
+else()
+  find_package(efusion REQUIRED)
+endif()
 
 include_directories(/usr/include/suitesparse)
 include_directories(${CUDA_INCLUDE_DIRS})

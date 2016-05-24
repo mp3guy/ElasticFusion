@@ -147,13 +147,13 @@ bool RawLogReader::hasMore()
 }
 
 
-void RawLogReader::rewind() {
+void RawLogReader::rewind()
+{
     if (filePointers.size() != 0)
     {
         filePointers = {};
     }
 
-    std::cerr << "resetted\n";
     fclose(fp);
     fp = fopen(file.c_str(), "rb");
 

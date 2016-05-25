@@ -181,6 +181,7 @@ void MainController::launch()
                 delete eFusion;
             }
 
+            logReader->rewind();
             eFusion = new ElasticFusion(openLoop ? std::numeric_limits<int>::max() / 2 : timeDelta,
                                         icpCountThresh,
                                         icpErrThresh,

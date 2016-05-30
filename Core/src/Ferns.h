@@ -21,6 +21,7 @@
 
 #include <random>
 #include <Eigen/Core>
+#include <Eigen/LU>
 #include <vector>
 #include <limits>
 

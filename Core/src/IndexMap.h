@@ -26,6 +26,7 @@
 #include "Utils/Resolution.h"
 #include "Utils/Intrinsics.h"
 #include <pangolin/gl/gl.h>
+#include <Eigen/LU>
 
 class IndexMap
 {

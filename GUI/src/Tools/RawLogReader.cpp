@@ -151,7 +151,8 @@ void RawLogReader::rewind()
 {
     if (filePointers.size() != 0)
     {
-        filePointers = {};
+        std::stack<int> empty;
+        std::swap(empty, filePointers);
     }
 
     fclose(fp);

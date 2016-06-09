@@ -578,156 +578,62 @@ void imageBGRToIntensity(cudaArray * cuArr, DeviceArray2D<unsigned char> & dst)
 __constant__ float gsobel_x3x3[9];
 __constant__ float gsobel_y3x3[9];
 
-template<int BLOCK_SIZE_X, int BLOCK_SIZE_Y, int PIXELS_PER_THREAD, int N, int N2>
-__global__ void sobelKernel(const unsigned char* input_data,
-                            unsigned short height,
-                            unsigned short width,
-                            unsigned short input_pitch,
-                            unsigned short output_pitch,
-                            short* output_dx,
-                            short* output_dy)
+__global__ void applyKernel(const PtrStepSz<unsigned char> src, PtrStep<short> dx, PtrStep<short> dy)
 {
+  int x = threadIdx.x + blockIdx.x * blockDim.x;
+  int y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    short j = (blockIdx.x * BLOCK_SIZE_X) + threadIdx.x;
-    short j0 = (blockIdx.x * BLOCK_SIZE_X * PIXELS_PER_THREAD) + (threadIdx.x * PIXELS_PER_THREAD);
-    short i = (blockIdx.y * BLOCK_SIZE_Y) + threadIdx.y;
+  if(x >= src.cols || y >= src.rows)
+    return;
 
-    unsigned int *ptr_ui;
-    short *ptr_output_data;
+  float dxVal = 0;
+  float dyVal = 0;
 
-    //Alloc and init shared memory
-    __shared__ unsigned int input_data_smem[BLOCK_SIZE_Y + (N << 1)][BLOCK_SIZE_X + (N2 << 1)];
-    unsigned char *ptr_smem = (unsigned char*) &(input_data_smem[0][0]);
-    unsigned short smem_pitch = (BLOCK_SIZE_X + (N2 << 1)) << 2;
+  int kernelIndex = 8;
+  for(int j = max(y - 1, 0); j <= min(y + 1, src.rows - 1); j++)
+  {
+      for(int i = max(x - 1, 0); i <= min(x + 1, src.cols - 1); i++)
+      {
+          dxVal += (float)src.ptr(j)[i] * gsobel_x3x3[kernelIndex];
+          dyVal += (float)src.ptr(j)[i] * gsobel_y3x3[kernelIndex];
+          --kernelIndex;
+      }
+  }
 
-    __shared__ float output_dx_smem[BLOCK_SIZE_Y][BLOCK_SIZE_X * PIXELS_PER_THREAD];
-    __shared__ float output_dy_smem[BLOCK_SIZE_Y][BLOCK_SIZE_X * PIXELS_PER_THREAD];
-
-#pragma unroll
-    for(short p = 0; p < PIXELS_PER_THREAD; p++)
-    {
-        output_dx_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD) + p] = 0;
-        output_dy_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD) + p] = 0;
-    }
-
-    if(i < height && j < (width >> 2))
-    { //Assume PIXELS_PER_THREAD = 4
-
-        //Each thread loads 1 uint, ie 4 uchar
-
-        //Copy data to shared memory ----------------------------------------------------------------------------
-
-        //1. All threads read, shift up and left
-        ptr_ui = (unsigned int*) (input_data + ((i - N) * input_pitch));
-        input_data_smem[threadIdx.y][threadIdx.x] = ptr_ui[j - N2];
-        //2. Right columns
-        if(threadIdx.x < (N2 << 1))
-        {
-            input_data_smem[threadIdx.y][threadIdx.x + BLOCK_SIZE_X] =
-                            (i - N >= 0 && j - N2 + BLOCK_SIZE_X < (width >> 2)) ? ptr_ui[j
-                                                                                          - N2 + BLOCK_SIZE_X] : 0;
-        }
-        //3. Bottom rows
-        if(threadIdx.y < (N << 1))
-        {
-            ptr_ui = (unsigned int*) (input_data
-                            + ((i - N + BLOCK_SIZE_Y) * input_pitch));
-            input_data_smem[threadIdx.y + BLOCK_SIZE_Y][threadIdx.x] =
-                            (i - N + BLOCK_SIZE_Y < height && j - N2 >= 0) ? ptr_ui[j
-                                                                                    - N2] : 0;
-        }
-        //4. Bottom-right
-        if(threadIdx.x < (N2 << 1) && threadIdx.y < (N << 1))
-        {
-            input_data_smem[threadIdx.y + BLOCK_SIZE_Y][threadIdx.x
-                                                        + BLOCK_SIZE_X] =
-                                                                        (i - N + BLOCK_SIZE_Y < height
-                                                                                        && j - N2 + BLOCK_SIZE_X
-                                                                                        < (width >> 2)) ? ptr_ui[j
-                                                                                                                 - N2 + BLOCK_SIZE_X] : 0;
-        }
-        __syncthreads();
-        //-------------------------------------------------------------------------------------------------------
-
-        //Processing --------------------------------------------------------------------------------------------
-        short li = threadIdx.y + N;
-        short lj = ((threadIdx.x + N2) * PIXELS_PER_THREAD);
-
-        //3x3 neighbours
-        short k = -N, l = -N;
-#pragma unroll
-        for(short loop = 0; loop < ((N << 1) + 1) * ((N << 1) + 1); loop++)
-        {
-
-            short lik = li + k;
-            short ljl = lj + l;
-
-            //Get neighbour value
-            unsigned char *ptr2 = ptr_smem + (lik * smem_pitch);
-
-            int idx = ((N << 1) + 1) * ((N << 1) + 1) - 1 - loop;
-            float factor_x = gsobel_x3x3[idx];
-            float factor_y = gsobel_y3x3[idx];
-
-#pragma unroll
-            for(short p = 0; p < PIXELS_PER_THREAD; p++)
-            {
-
-                //Get current_pixel value
-                //  unsigned char val0 = ptr[lj+p];
-
-                float valn = (float) ptr2[ljl + p];
-                output_dx_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD)
-                                            + p] += factor_x * valn;
-                output_dy_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD)
-                                            + p] += factor_y * valn;
-
-            }                //end for p
-
-            l = (l < N) ? l + 1 : -N;
-            k = (l == -N) ? k + 1 : k;
-        }                //end loop k,l
-
-        __syncthreads();
-        //-------------------------------------------------------------------------------------------------------
-
-#pragma unroll
-        for(short p = 0; p < PIXELS_PER_THREAD; p++)
-        {
-            ptr_output_data = (short*) ((unsigned char *) output_dx + (i * output_pitch));
-            ptr_output_data[j0 + p] = (short) output_dx_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD) + p];
-            ptr_output_data = (short*) ((unsigned char *) output_dy + (i * output_pitch));
-            ptr_output_data[j0 + p] = (short) output_dy_smem[threadIdx.y][(threadIdx.x * PIXELS_PER_THREAD) + p];
-        }
-    } //end if
+  dx.ptr(y)[x] = dxVal;
+  dy.ptr(y)[x] = dyVal;
 }
 
-void sobelGaussian(DeviceArray2D<unsigned char>& src, DeviceArray2D<short>& dx, DeviceArray2D<short>& dy)
+void computeDerivativeImages(DeviceArray2D<unsigned char>& src, DeviceArray2D<short>& dx, DeviceArray2D<short>& dy)
 {
-    float gsx3x3[9] = {0.52201,  0.00000, -0.52201,
-                    0.79451, -0.00000, -0.79451,
-                    0.52201,  0.00000, -0.52201};
+    static bool once = false;
 
-    float gsy3x3[9] = {0.52201, 0.79451, 0.52201,
-                    0.00000, 0.00000, 0.00000,
-                    -0.52201, -0.79451, -0.52201};
+    if(!once)
+    {
+        float gsx3x3[9] = {0.52201,  0.00000, -0.52201,
+                           0.79451, -0.00000, -0.79451,
+                           0.52201,  0.00000, -0.52201};
 
-    cudaMemcpyToSymbol(gsobel_x3x3, gsx3x3, 9<<2);
-    cudaMemcpyToSymbol(gsobel_y3x3, gsy3x3, 9<<2);
+        float gsy3x3[9] = {0.52201, 0.79451, 0.52201,
+                           0.00000, 0.00000, 0.00000,
+                           -0.52201, -0.79451, -0.52201};
 
-    cudaSafeCall ( cudaGetLastError () );
-    cudaSafeCall (cudaDeviceSynchronize ());
+        cudaMemcpyToSymbol(gsobel_x3x3, gsx3x3, sizeof(float) * 9);
+        cudaMemcpyToSymbol(gsobel_y3x3, gsy3x3, sizeof(float) * 9);
 
-    sobelKernel<32, 6, 4, 1, 1><<<dim3(getGridDim(dx.cols() / 4, 32), getGridDim(dx.rows(), 6)), dim3(32, 6)>>>(src.ptr(0),
-                                                                                                                (unsigned short) src.rows(),
-                                                                                                                (unsigned short) src.cols(),
-                                                                                                                (unsigned short) src.step(),
-                                                                                                                (unsigned short) dx.step(),
-                                                                                                                dx.ptr(0),
-                                                                                                                dy.ptr(0));
+        cudaSafeCall(cudaGetLastError());
+        cudaSafeCall(cudaDeviceSynchronize());
 
-    cudaSafeCall ( cudaGetLastError () );
-    cudaSafeCall (cudaDeviceSynchronize ());
+        once = true;
+    }
+
+    dim3 block(32, 8);
+    dim3 grid(getGridDim (src.cols (), block.x), getGridDim (src.rows (), block.y));
+
+    applyKernel<<<grid, block>>>(src, dx, dy);
+
+    cudaSafeCall(cudaGetLastError());
+    cudaSafeCall(cudaDeviceSynchronize());
 }
 
 __global__ void projectPointsKernel(const PtrStepSz<float> depth,

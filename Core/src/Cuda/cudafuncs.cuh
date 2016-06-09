@@ -172,8 +172,8 @@ void pyrDownGaussF(const DeviceArray2D<float> & src,
 void pyrDownUcharGauss(const DeviceArray2D<unsigned char>& src,
                        DeviceArray2D<unsigned char> & dst);
 
-void sobelGaussian(DeviceArray2D<unsigned char>& src,
-                   DeviceArray2D<short>& dx,
-                   DeviceArray2D<short>& dy);
+void computeDerivativeImages(DeviceArray2D<unsigned char>& src,
+                             DeviceArray2D<short>& dx,
+                             DeviceArray2D<short>& dy);
 
 #endif /* CUDA_CUDAFUNCS_CUH_ */

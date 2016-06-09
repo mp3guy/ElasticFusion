@@ -285,7 +285,7 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
     {
         for(int i = 0; i < NUM_PYRS; i++)
         {
-            sobelGaussian(nextImage[i], nextdIdx[i], nextdIdy[i]);
+            computeDerivativeImages(nextImage[i], nextdIdx[i], nextdIdy[i]);
         }
     }
 

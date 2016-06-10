@@ -986,7 +986,11 @@ struct SO3Reduction
         if(warpedReferencePixel.x >= 1 &&
            warpedReferencePixel.x < cols - 1 &&
            warpedReferencePixel.y >= 1 &&
-           warpedReferencePixel.y < rows - 1)
+           warpedReferencePixel.y < rows - 1 &&
+           x >= 1 &&
+           x < cols - 1 &&
+           y >= 1 &&
+           y < rows - 1)
         {
             found_coresp = true;
         }

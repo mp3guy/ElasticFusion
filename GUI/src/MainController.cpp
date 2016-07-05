@@ -324,12 +324,12 @@ void MainController::run()
         gui->trackInliers->Ref().Set(stri.str());
 
         std::stringstream stre;
-        stre << (isnan(eFusion->getModelToModel().lastICPError) ? 0 : eFusion->getModelToModel().lastICPError);
+        stre << (std::isnan(eFusion->getModelToModel().lastICPError) ? 0 : eFusion->getModelToModel().lastICPError);
         gui->trackRes->Ref().Set(stre.str());
 
         if(!gui->pause->Get())
         {
-            gui->resLog.Log((isnan(eFusion->getModelToModel().lastICPError) ? std::numeric_limits<float>::max() : eFusion->getModelToModel().lastICPError), icpErrThresh);
+            gui->resLog.Log((std::isnan(eFusion->getModelToModel().lastICPError) ? std::numeric_limits<float>::max() : eFusion->getModelToModel().lastICPError), icpErrThresh);
             gui->inLog.Log(eFusion->getModelToModel().lastICPCount, icpCountThresh);
         }
 

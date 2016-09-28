@@ -46,6 +46,7 @@ add_library(efusion SHARED
 )
 
 target_link_libraries(efusion
+					  ws2_32
                       ${Eigen_LIBRARIES}
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}

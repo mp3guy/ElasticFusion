@@ -20,8 +20,9 @@
 #define LOGREADER_H_
 
 #include <string>
+#undef FAR
 #include <zlib.h>
-#include <poll.h>
+//#include <poll.h>
 #include <Utils/Img.h>
 #include <Utils/Resolution.h>
 

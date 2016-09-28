@@ -5,11 +5,13 @@ project(ElasticFusion)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 
 find_package(ZLIB REQUIRED)
+find_package(JPEG REQUIRED)
 find_package(Pangolin 0.1 REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
 find_package(efusion REQUIRED)
 
+include_directories(${JPEG_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIR})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${Pangolin_INCLUDE_DIRS})
@@ -31,6 +33,7 @@ add_executable(ElasticFusion
 )
 
 target_link_libraries(ElasticFusion
+                      ${JPEG_LIBRARY}
                       ${ZLIB_LIBRARY}
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}

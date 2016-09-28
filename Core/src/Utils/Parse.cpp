@@ -71,12 +71,12 @@ std::string Parse::shaderDir() const
 std::string Parse::baseDir() const
 {
     char buf[256];
-    int length = readlink("/proc/self/exe", buf, sizeof(buf));
+    int length = GetModuleFileName(NULL,buf,sizeof(buf));
 
     std::string currentVal;
     currentVal.append((char *)&buf, length);
 
-    currentVal = currentVal.substr(0, currentVal.rfind("/build/"));
+    currentVal = currentVal.substr(0, currentVal.rfind("\\build\\"));
 
     return currentVal;
 }

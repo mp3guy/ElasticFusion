@@ -46,7 +46,7 @@ LiveLogReader::LiveLogReader(std::string file, bool flipColors)
 
         do
         {
-            usleep(33333);
+          std::this_thread::sleep_for(std::chrono::microseconds(33333));
             std::cout << "."; std::cout.flush();
             lastDepth = asus->latestDepthIndex.getValue();
         } while(lastDepth == -1);

@@ -19,10 +19,13 @@
 #ifndef LIVELOGREADER_H_
 #define LIVELOGREADER_H_
 
+#define NOMINMAX
 #include <stdio.h>
 #include <stdlib.h>
 //#include <poll.h>
 #include <signal.h>
+#include <chrono>
+#include <thread>
 
 #include <Utils/Parse.h>
 

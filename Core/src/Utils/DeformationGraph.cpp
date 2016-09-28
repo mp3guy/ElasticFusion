@@ -130,6 +130,11 @@ void DeformationGraph::applyGraphToPoses(std::vector<Eigen::Matrix4f*> & poses)
     }
 }
 
+unsigned long long ulonglongDiffAbs(unsigned long long a,unsigned long long b)
+{
+  return (a > b) ? (a - b) : (b - a);
+}
+
 void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTimeMap, const std::vector<Eigen::Matrix4f> & poses)
 {
     poseMap.clear();
@@ -169,13 +174,13 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
 
         imin = std::min(imin, (int)sampledGraphTimes.size() - 1);
 
-        if(abs(sampledGraphTimes[imin] - poseTime) <= abs(sampledGraphTimes[imid] - poseTime) &&
-           abs(sampledGraphTimes[imin] - poseTime) <= abs(sampledGraphTimes[imax] - poseTime))
+        if(ulonglongDiffAbs(sampledGraphTimes[imin],poseTime) <= ulonglongDiffAbs(sampledGraphTimes[imid],poseTime) &&
+          ulonglongDiffAbs(sampledGraphTimes[imin],poseTime) <= ulonglongDiffAbs(sampledGraphTimes[imax],poseTime))
         {
             foundIndex = imin;
         }
-        else if(abs(sampledGraphTimes[imid] - poseTime) <= abs(sampledGraphTimes[imin] - poseTime) &&
-                abs(sampledGraphTimes[imid] - poseTime) <= abs(sampledGraphTimes[imax] - poseTime))
+        else if(ulonglongDiffAbs(sampledGraphTimes[imid],poseTime) <= ulonglongDiffAbs(sampledGraphTimes[imin],poseTime) &&
+                ulonglongDiffAbs(sampledGraphTimes[imid],poseTime) <= ulonglongDiffAbs(sampledGraphTimes[imax],poseTime))
         {
             foundIndex = imid;
         }
@@ -324,13 +329,13 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * v
 
         imin = std::min(imin, (int)sampledGraphTimes.size() - 1);
 
-        if(abs(sampledGraphTimes[imin] - vertexTime) <= abs(sampledGraphTimes[imid] - vertexTime) &&
-           abs(sampledGraphTimes[imin] - vertexTime) <= abs(sampledGraphTimes[imax] - vertexTime))
+        if(ulonglongDiffAbs(sampledGraphTimes[imin],vertexTime) <= ulonglongDiffAbs(sampledGraphTimes[imid],vertexTime) &&
+           ulonglongDiffAbs(sampledGraphTimes[imin],vertexTime) <= ulonglongDiffAbs(sampledGraphTimes[imax],vertexTime))
         {
             foundIndex = imin;
         }
-        else if(abs(sampledGraphTimes[imid] - vertexTime) <= abs(sampledGraphTimes[imin] - vertexTime) &&
-                abs(sampledGraphTimes[imid] - vertexTime) <= abs(sampledGraphTimes[imax] - vertexTime))
+        else if(ulonglongDiffAbs(sampledGraphTimes[imid],vertexTime) <= ulonglongDiffAbs(sampledGraphTimes[imin],vertexTime) &&
+                ulonglongDiffAbs(sampledGraphTimes[imid],vertexTime) <= ulonglongDiffAbs(sampledGraphTimes[imax],vertexTime))
         {
             foundIndex = imid;
         }

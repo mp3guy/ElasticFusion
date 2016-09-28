@@ -75,7 +75,8 @@ class OpenNI2Interface
                 {
                     stream.readFrame(&frame);
 
-                    lastRgbTime = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                    lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      std::chrono::system_clock::now().time_since_epoch()).count();
 
                     int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
 
@@ -114,7 +115,8 @@ class OpenNI2Interface
                 {
                     stream.readFrame(&frame);
 
-                    lastDepthTime = std::chrono::system_clock::now().time_since_epoch() / std::chrono::milliseconds(1);
+                    lastDepthTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                      std::chrono::system_clock::now().time_since_epoch()).count();
 
                     int bufferIndex = (latestDepthIndex.getValue() + 1) % numBuffers;
 

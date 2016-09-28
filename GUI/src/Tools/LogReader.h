@@ -19,6 +19,7 @@
 #ifndef LOGREADER_H_
 #define LOGREADER_H_
 
+#include <cstdint>
 #include <string>
 #undef FAR
 #include <zlib.h>

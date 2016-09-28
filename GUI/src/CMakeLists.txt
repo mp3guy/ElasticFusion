@@ -33,6 +33,7 @@ add_executable(ElasticFusion
 )
 
 target_link_libraries(ElasticFusion
+					  ws2_32
                       ${JPEG_LIBRARY}
                       ${ZLIB_LIBRARY}
                       ${Pangolin_LIBRARIES}

@@ -36,6 +36,11 @@ CUDA_COMPILE(cuda_objs ${cuda})
 set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 
+IF (WIN32)
+  add_definitions(-DWIN32)
+ENDIF()
+
+
 add_library(efusion SHARED 
             ${srcs}
             ${utils_srcs}

@@ -32,6 +32,7 @@
 #include "IndexMap.h"
 #include "Ferns.h"
 #include "PoseMatch.h"
+#include "Defines.h"
 
 #include <iomanip>
 #include <pangolin/gl/glcuda.h>
@@ -39,7 +40,7 @@
 class ElasticFusion
 {
     public:
-        ElasticFusion(const int timeDelta = 200,
+        EFUSION_API ElasticFusion(const int timeDelta = 200,
                       const int countThresh = 35000,
                       const float errThresh = 5e-05,
                       const float covThresh = 1e-05,
@@ -67,7 +68,7 @@ class ElasticFusion
          * @param weightMultiplier optional full frame fusion weight
          * @param bootstrap if true, use inPose as a pose guess rather than replacement
          */
-        void processFrame(const unsigned char * rgb,
+        EFUSION_API void processFrame(const unsigned char * rgb,
                           const unsigned short * depth,
                           const int64_t & timestamp,
                           const Eigen::Matrix4f * inPose = 0,
@@ -78,173 +79,173 @@ class ElasticFusion
          * Predicts the current view of the scene, updates the [vertex/normal/image]Tex() members
          * of the indexMap class
          */
-        void predict();
+        EFUSION_API void predict();
 
         /**
          * This class contains all of the predicted renders
          * @return reference
          */
-        IndexMap & getIndexMap();
+        EFUSION_API IndexMap & getIndexMap();
 
         /**
          * This class contains the surfel map
          * @return
          */
-        GlobalModel & getGlobalModel();
+        EFUSION_API GlobalModel & getGlobalModel();
 
         /**
          * This class contains the fern keyframe database
          * @return
          */
-        Ferns & getFerns();
+        EFUSION_API Ferns & getFerns();
 
         /**
          * This class contains the local deformation graph
          * @return
          */
-        Deformation & getLocalDeformation();
+        EFUSION_API Deformation & getLocalDeformation();
 
         /**
          * This is the map of raw input textures (you can display these)
          * @return
          */
-        std::map<std::string, GPUTexture*> & getTextures();
+        EFUSION_API std::map<std::string, GPUTexture*> & getTextures();
 
         /**
          * This is the list of deformation constraints
          * @return
          */
-        const std::vector<PoseMatch> & getPoseMatches();
+        EFUSION_API const std::vector<PoseMatch> & getPoseMatches();
 
         /**
          * This is the tracking class, if you want access
          * @return
          */
-        const RGBDOdometry & getModelToModel();
+        EFUSION_API const RGBDOdometry & getModelToModel();
 
         /**
          * The point fusion confidence threshold
          * @return
          */
-        const float & getConfidenceThreshold();
+        EFUSION_API const float & getConfidenceThreshold();
 
         /**
          * If you set this to true we just do 2.5D RGB-only Lucas–Kanade tracking (no fusion)
          * @param val
          */
-        void setRgbOnly(const bool & val);
+        EFUSION_API void setRgbOnly(const bool & val);
 
         /**
          * Weight for ICP in tracking
          * @param val if 100, only use depth for tracking, if 0, only use RGB. Best value is 10
          */
-        void setIcpWeight(const float & val);
+        EFUSION_API void setIcpWeight(const float & val);
 
         /**
          * Whether or not to use a pyramid for tracking
          * @param val default is true
          */
-        void setPyramid(const bool & val);
+        EFUSION_API void setPyramid(const bool & val);
 
         /**
          * Controls the number of tracking iterations
          * @param val default is false
          */
-        void setFastOdom(const bool & val);
+        EFUSION_API void setFastOdom(const bool & val);
 
         /**
          * Turns on or off SO(3) alignment bootstrapping
          * @param val
          */
-        void setSo3(const bool & val);
+        EFUSION_API void setSo3(const bool & val);
 
         /**
          * Turns on or off frame to frame tracking for RGB
          * @param val
          */
-        void setFrameToFrameRGB(const bool & val);
+        EFUSION_API void setFrameToFrameRGB(const bool & val);
 
         /**
          * Raw data fusion confidence threshold
          * @param val default value is 10, but you can play around with this
          */
-        void setConfidenceThreshold(const float & val);
+        EFUSION_API void setConfidenceThreshold(const float & val);
 
         /**
          * Threshold for sampling new keyframes
          * @param val default is some magic value, change at your own risk
          */
-        void setFernThresh(const float & val);
+        EFUSION_API void setFernThresh(const float & val);
 
         /**
          * Cut raw depth input off at this point
          * @param val default is 3 meters
          */
-        void setDepthCutoff(const float & val);
+        EFUSION_API void setDepthCutoff(const float & val);
 
         /**
          * Returns whether or not the camera is lost, if relocalisation mode is on
          * @return
          */
-        const bool & getLost();
+        EFUSION_API const bool & getLost();
 
         /**
          * Get the internal clock value of the fusion process
          * @return monotonically increasing integer value (not real-world time)
          */
-        const int & getTick();
+        EFUSION_API const int & getTick();
 
         /**
          * Get the time window length for model matching
          * @return
          */
-        const int & getTimeDelta();
+        EFUSION_API const int & getTimeDelta();
 
         /**
          * Cheat the clock, only useful for multisession/log fast forwarding
          * @param val control time itself!
          */
-        void setTick(const int & val);
+        EFUSION_API void setTick(const int & val);
 
         /**
          * Internal maximum depth processed, this is defaulted to 20 (for rescaling depth buffers)
          * @return
          */
-        const float & getMaxDepthProcessed();
+        EFUSION_API const float & getMaxDepthProcessed();
 
         /**
          * The current global camera pose estimate
          * @return SE3 pose
          */
-        const Eigen::Matrix4f & getCurrPose();
+        EFUSION_API const Eigen::Matrix4f & getCurrPose();
 
         /**
          * The number of local deformations that have occurred
          * @return
          */
-        const int & getDeforms();
+        EFUSION_API const int & getDeforms();
 
         /**
          * The number of global deformations that have occured
          * @return
          */
-        const int & getFernDeforms();
+        EFUSION_API const int & getFernDeforms();
 
         /**
          * These are the vertex buffers computed from the raw input data
          * @return can be rendered
          */
-        std::map<std::string, FeedbackBuffer*> & getFeedbackBuffers();
+        EFUSION_API std::map<std::string, FeedbackBuffer*> & getFeedbackBuffers();
 
         /**
          * Calculate the above for the current frame (only done on the first frame normally)
          */
-        void computeFeedbackBuffers();
+        EFUSION_API void computeFeedbackBuffers();
 
         /**
          * Saves out a .ply mesh file of the current model
          */
-        void savePly();
+        EFUSION_API void savePly();
 
         /**
          * Renders a normalised view of the input raw depth for displaying as an OpenGL texture
@@ -252,7 +253,7 @@ class ElasticFusion
          * @param minVal minimum depth value to render
          * @param maxVal maximum depth value to render
          */
-        void normaliseDepth(const float & minVal, const float & maxVal);
+        EFUSION_API void normaliseDepth(const float & minVal, const float & maxVal);
 
         //Here be dragons
     private:

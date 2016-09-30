@@ -24,10 +24,12 @@
 #include <cuda_gl_interop.h>
 #include <cuda_runtime_api.h>
 
+#include "Defines.h"
+
 class GPUTexture
 {
     public:
-        GPUTexture(const int width,
+        EFUSION_API GPUTexture(const int width,
                    const int height,
                    const GLenum internalFormat,
                    const GLenum format,
@@ -37,7 +39,7 @@ class GPUTexture
 
         virtual ~GPUTexture();
 
-        static const std::string RGB, DEPTH_RAW, DEPTH_FILTERED, DEPTH_METRIC, DEPTH_METRIC_FILTERED, DEPTH_NORM;
+        EFUSION_API static const std::string RGB, DEPTH_RAW, DEPTH_FILTERED, DEPTH_METRIC, DEPTH_METRIC_FILTERED, DEPTH_NORM;
 
         pangolin::GlTexture * texture;
 

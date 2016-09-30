@@ -41,6 +41,8 @@
 #include <iostream>
 #include <map>
 
+#include "../Defines.h"
+
 #define SEND_INTERVAL_MS 10000
 
 #ifndef DISABLE_STOPWATCH
@@ -77,9 +79,9 @@
 
 #endif
 
-int gettimeofday(struct timeval * tp,struct timezone * tzp);
+EFUSION_API int gettimeofday(struct timeval * tp,struct timezone * tzp);
 
-void *mempcpy(void *dest,const void *src,size_t n);
+EFUSION_API void *mempcpy(void *dest,const void *src,size_t n);
 
 class Stopwatch
 {

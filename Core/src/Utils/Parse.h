@@ -28,6 +28,8 @@
 #include <string.h>
 #include <pangolin/utils/file_utils.h>
 
+#include "../Defines.h"
+
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
@@ -40,20 +42,20 @@ class Parse
             return instance;
         }
 
-        int arg(int argc, char** argv, const char* str, std::string &val) const;
+        EFUSION_API int arg(int argc, char** argv, const char* str, std::string &val) const;
 
-        int arg(int argc, char** argv, const char* str, float &val) const;
+        EFUSION_API int arg(int argc, char** argv, const char* str, float &val) const;
 
-        int arg(int argc, char** argv, const char* str, int &val) const;
+        EFUSION_API int arg(int argc, char** argv, const char* str, int &val) const;
 
-        std::string shaderDir() const;
+        EFUSION_API std::string shaderDir() const;
 
-        std::string baseDir() const;
+        EFUSION_API std::string baseDir() const;
 
     private:
-        Parse();
+        EFUSION_API Parse();
 
-        int findArg(int argc, char** argv, const char* argument_name) const;
+        EFUSION_API int findArg(int argc,char** argv,const char* argument_name) const;
 };
 
 #endif /* PARSE_H_ */

@@ -27,6 +27,7 @@
 #include "Utils/Resolution.h"
 #include "Utils/Intrinsics.h"
 #include "Ferns.h"
+#include "Defines.h"
 
 #include <pangolin/gl/gl.h>
 
@@ -36,7 +37,7 @@ class Deformation
         Deformation();
         virtual ~Deformation();
 
-        std::vector<GraphNode*> & getGraph();
+        EFUSION_API std::vector<GraphNode*> & getGraph();
 
         void getRawGraph(std::vector<float> & graph);
 

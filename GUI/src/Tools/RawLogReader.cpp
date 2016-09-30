@@ -27,7 +27,8 @@ RawLogReader::RawLogReader(std::string file, bool flipColors)
 
     currentFrame = 0;
 
-    assert(fread(&numFrames, sizeof(int32_t), 1, fp));
+    auto tmp = fread(&numFrames,sizeof(int32_t),1,fp);
+    assert(tmp);
 
     depthReadBuffer = new unsigned char[numPixels * 2];
     imageReadBuffer = new unsigned char[numPixels * 3];
@@ -65,16 +66,21 @@ void RawLogReader::getNext()
 
 void RawLogReader::getCore()
 {
-    assert(fread(&timestamp, sizeof(int64_t), 1, fp));
+    auto tmp = fread(&timestamp,sizeof(int64_t),1,fp);
+    assert(tmp);
 
-    assert(fread(&depthSize, sizeof(int32_t), 1, fp));
-    assert(fread(&imageSize, sizeof(int32_t), 1, fp));
+    tmp = fread(&depthSize,sizeof(int32_t),1,fp);
+    assert(tmp);
+    tmp = fread(&imageSize,sizeof(int32_t),1,fp);
+    assert(tmp);
 
-    assert(fread(depthReadBuffer, depthSize, 1, fp));
+    tmp = fread(depthReadBuffer,depthSize,1,fp);
+    assert(tmp);
 
     if(imageSize > 0)
     {
-        assert(fread(imageReadBuffer, imageSize, 1, fp));
+        tmp = fread(imageReadBuffer,imageSize,1,fp);
+        assert(tmp);
     }
 
     if(depthSize == numPixels * 2)
@@ -120,16 +126,21 @@ void RawLogReader::fastForward(int frame)
     {
         filePointers.push(ftell(fp));
 
-        assert(fread(&timestamp, sizeof(int64_t), 1, fp));
+        auto tmp = fread(&timestamp,sizeof(int64_t),1,fp);
+        assert(tmp);
 
-        assert(fread(&depthSize, sizeof(int32_t), 1, fp));
-        assert(fread(&imageSize, sizeof(int32_t), 1, fp));
+        tmp = fread(&depthSize,sizeof(int32_t),1,fp);
+        assert(tmp);
+        tmp = fread(&imageSize,sizeof(int32_t),1,fp);
+        assert(tmp);
 
-        assert(fread(depthReadBuffer, depthSize, 1, fp));
+        tmp = fread(depthReadBuffer,depthSize,1,fp);
+        assert(tmp);
 
         if(imageSize > 0)
         {
-            assert(fread(imageReadBuffer, imageSize, 1, fp));
+            tmp = fread(imageReadBuffer,imageSize,1,fp);
+            assert(tmp);
         }
 
         currentFrame++;
@@ -158,7 +169,8 @@ void RawLogReader::rewind()
     fclose(fp);
     fp = fopen(file.c_str(), "rb");
 
-    assert(fread(&numFrames, sizeof(int32_t), 1, fp));
+    auto tmp = fread(&numFrames,sizeof(int32_t),1,fp);
+    assert(tmp);
 
     currentFrame = 0;
 }

@@ -25,7 +25,7 @@ file(GLOB tools_srcs Tools/*.cpp)
 set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
 
-add_definitions(-Dlinux=1)
+add_definitions(-Dlinux=0)
 
 add_executable(ElasticFusion 
                ${srcs}
@@ -41,3 +41,9 @@ target_link_libraries(ElasticFusion
                       ${EFUSION_LIBRARY}
                       ${OPENNI2_LIBRARY}
 )
+
+INSTALL(TARGETS ElasticFusion
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+    )

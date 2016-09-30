@@ -13,7 +13,7 @@ find_path(EFUSION_INCLUDE_DIR ElasticFusion.h
 )
 
 find_library(EFUSION_LIBRARY
-             NAMES libefusion.so
+             NAMES libefusion.lib
              PATHS
                ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/build
                ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/src/build

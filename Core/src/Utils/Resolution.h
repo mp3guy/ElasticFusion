@@ -21,14 +21,12 @@
 
 #include <cassert>
 
+#include "../Defines.h"
+
 class Resolution
 {
     public:
-        static const Resolution & getInstance(int width = 0, int height = 0)
-        {
-            static const Resolution instance(width, height);
-            return instance;
-        }
+        EFUSION_API static const Resolution & getInstance(int width = 0,int height = 0);
 
         const int & width() const
         {

@@ -36,11 +36,7 @@
 class Parse
 {
     public:
-        static const Parse & get()
-        {
-            static const Parse instance;
-            return instance;
-        }
+        EFUSION_API static const Parse & get();
 
         EFUSION_API int arg(int argc, char** argv, const char* str, std::string &val) const;
 

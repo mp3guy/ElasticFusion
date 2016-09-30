@@ -23,6 +23,12 @@ Parse::Parse()
 
 }
 
+const Parse & Parse::get()
+{
+  static const Parse instance;
+  return instance;
+}
+
 int Parse::arg(int argc, char** argv, const char* str, std::string &val) const
 {
     int index = findArg(argc, argv, str) + 1;

@@ -41,16 +41,17 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "--ftz=true;--prec-div=false;--prec-sqrt=
 
 CUDA_COMPILE(cuda_objs ${cuda})
 
-set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 
 set(CMAKE_RELEASE_POSTFIX "")
 set(CMAKE_DEBUG_POSTFIX "d")
 
-IF (WIN32)
-  add_definitions(-DWIN32)
-ENDIF()
-
+if(WIN32)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
+  add_definitions(-DNOMINMAX)
+  set (EXTRA_WINDOWS_LIBS ${EXTRA_WINDOWS_LIBS} ws2_32)
+endif()
 
 add_library(efusion SHARED 
             ${srcs}
@@ -67,11 +68,11 @@ add_library(efusion SHARED
 )
 
 target_link_libraries(efusion
-					  ws2_32
                       ${Eigen_LIBRARIES}
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}
                       ${SUITESPARSE_LIBRARIES}
+					  ${EXTRA_WINDOWS_LIBS}
 )
 
 INSTALL(TARGETS efusion

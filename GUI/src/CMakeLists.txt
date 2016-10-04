@@ -25,6 +25,10 @@ include_directories(${OPENNI2_INCLUDE_DIR})
 
 file(GLOB srcs *.cpp)
 file(GLOB tools_srcs Tools/*.cpp)
+if(WIN32)
+  file(GLOB hdrs *.h)
+  file(GLOB tools_hdrs Tools/*.h)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse2 -msse3 -Wall -std=c++11")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
@@ -38,6 +42,8 @@ endif()
 add_executable(ElasticFusion 
                ${srcs}
                ${tools_srcs}
+               ${hdrs}
+               ${tools_hdrs}
 )
 
 if(WIN32)

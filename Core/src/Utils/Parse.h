@@ -18,13 +18,16 @@
 #ifndef PARSE_H_
 #define PARSE_H_
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#ifdef WIN32
+#  include <Windows.h>
+#endif
 
 #include <dirent.h>
 #include <string>
 #include <cassert>
-//#include <unistd.h>
+#ifndef WIN32
+#  include <unistd.h>
+#endif
 #include <string.h>
 #include <pangolin/utils/file_utils.h>
 

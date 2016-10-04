@@ -19,7 +19,9 @@
 #ifndef GROUNDTRUTHODOMETRY_H_
 #define GROUNDTRUTHODOMETRY_H_
 
-#include <cstdint>
+#ifdef WIN32
+#  include <cstdint>
+#endif 
 
 #include <Eigen/Core>
 #include <Eigen/SVD>

@@ -13,7 +13,7 @@ find_path(EFUSION_INCLUDE_DIR ElasticFusion.h
 )
 
 find_library(EFUSION_LIBRARY
-             NAMES libefusion.lib
+             NAMES libefusion
              PATHS
                ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/build
                ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/src/build
@@ -25,4 +25,4 @@ set(EFUSION_LIBRARIES ${EFUSION_LIBRARY})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(EFUSION DEFAULT_MSG EFUSION_LIBRARY EFUSION_INCLUDE_DIR)
-mark_as_advanced(EFUSION_LIBRARY EFUSION_INCLUDE_DIR)
+#mark_as_advanced(EFUSION_LIBRARY EFUSION_INCLUDE_DIR)

@@ -1,7 +1,8 @@
 /*
- * File written by Filip Srajer, ETH Zurich, CVG.
- *
- */
+* This file was written for porting ElasticFusion to windows
+* by Filip Srajer (filip.srajer@inf.ethz.ch).
+*
+*/
 
 #pragma once
 

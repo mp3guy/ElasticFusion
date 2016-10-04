@@ -1,7 +1,8 @@
 /*
- * Written by Filip Srajer.
- *
- */
+* This file was written for porting ElasticFusion to windows
+* by Filip Srajer (filip.srajer@inf.ethz.ch).
+*
+*/
 
 #include "Intrinsics.h"
 

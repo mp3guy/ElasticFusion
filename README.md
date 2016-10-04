@@ -9,7 +9,7 @@ Please cite this work if you make use of our system in any of your own endeavors
 
 # 1. What do I need to build it? #
 
-** Ubuntu **
+## 1.1. Ubuntu ##
 
 * Ubuntu 14.04, 15.04 or 16.04 (Though many other linux distros will work fine)
 * CMake
@@ -32,7 +32,7 @@ Afterwards install [OpenNI2](https://github.com/occipital/OpenNI2) and [Pangolin
 
 When you have all of the dependencies installed, build the Core followed by the GUI. 
 
-** Windows - Visual Studio **
+## 1.2. Windows - Visual Studio ##
 * Windows 7 with Visual Studio 2013 Update 5 (Though other configurations may work)
 * [CMake] (https://cmake.org/)
 * OpenGL

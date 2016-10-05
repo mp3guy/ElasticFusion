@@ -19,21 +19,41 @@
 #ifndef STOPWATCH_H_
 #define STOPWATCH_H_
 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
+
+#ifdef WIN32
+#  define far
+#  include <Windows.h>
+#  include <WinSock2.h>
+#  include <stdint.h> // portable: uint64_t   MSVC: __int64 
+#  include <time.h>
+#  include "WindowsExtras.h"
+#else
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <arpa/inet.h>
+#endif
 
 #include <string.h>
-#include <sys/time.h>
 #include <vector>
 #include <string>
-#include <unistd.h>
 #include <iostream>
 #include <map>
+#ifndef WIN32
+#  include <sys/time.h>
+#  include <unistd.h>
+#endif
+
+#include "../Defines.h"
 
 #define SEND_INTERVAL_MS 10000
+
+#ifdef WIN32
+typedef char stopwatchPacketType;
+#else
+typedef unsigned char stopwatchSerialiseType;
+#endif
 
 #ifndef DISABLE_STOPWATCH
 #define STOPWATCH(name, expression) \
@@ -88,7 +108,7 @@ class Stopwatch
 
         void setCustomSignature(unsigned long long int newSignature)
         {
-            signature = newSignature;
+          signature = newSignature;
         }
 
         const std::map<std::string, float> & getTimings()
@@ -118,8 +138,7 @@ class Stopwatch
             if((currentSend = (clock.tv_sec * 1000000 + clock.tv_usec)) - lastSend > SEND_INTERVAL_MS)
             {
                 int size = 0;
-                unsigned char * data = serialiseTimings(size);
-
+                stopwatchPacketType * data = serialiseTimings(size);
                 sendto(sockfd, data, size, 0, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
                 free(data);
@@ -169,10 +188,14 @@ class Stopwatch
 
         virtual ~Stopwatch()
         {
+#ifdef WIN32
+            closesocket(sockfd);
+#else
             close(sockfd);
+#endif
         }
 
-        unsigned char * serialiseTimings(int & packetSize)
+        stopwatchPacketType * serialiseTimings(int & packetSize)
         {
             packetSize = sizeof(int) + sizeof(unsigned long long int);
 
@@ -195,7 +218,7 @@ class Stopwatch
                 *valuePointer++ = it->second;
             }
 
-            return (unsigned char *)dataPacket;
+            return (stopwatchPacketType *)dataPacket;
         }
 
         timeval clock;

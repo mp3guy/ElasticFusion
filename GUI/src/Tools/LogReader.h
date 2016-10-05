@@ -19,9 +19,17 @@
 #ifndef LOGREADER_H_
 #define LOGREADER_H_
 
+#ifdef WIN32
+#  include <cstdint>
+#endif
 #include <string>
+#if (defined WIN32) && (defined FAR)
+#  undef FAR
+#endif
 #include <zlib.h>
-#include <poll.h>
+#ifndef WIN32
+#  include <poll.h>
+#endif
 #include <Utils/Img.h>
 #include <Utils/Resolution.h>
 

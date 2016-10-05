@@ -21,10 +21,12 @@
 
 #include <Eigen/Core>
 
+#include "../Defines.h"
+
 class Vertex
 {
     public:
-        static const int SIZE;
+        EFUSION_API static const int SIZE;
 
     private:
         Vertex(){}

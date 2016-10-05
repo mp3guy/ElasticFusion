@@ -28,6 +28,8 @@
 #include <pangolin/gl/gl.h>
 #include <Eigen/LU>
 
+#include "Defines.h"
+
 class IndexMap
 {
     public:
@@ -40,7 +42,7 @@ class IndexMap
                             const float depthCutoff,
                             const int timeDelta);
 
-        void renderDepth(const float depthCutoff);
+        EFUSION_API void renderDepth(const float depthCutoff);
 
         enum Prediction
         {

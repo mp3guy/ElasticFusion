@@ -21,6 +21,14 @@ file(GLOB shader_srcs Shaders/*.cpp)
 file(GLOB cuda Cuda/*.cu)
 file(GLOB containers Cuda/containers/*.cpp)
 
+if(WIN32)
+  file(GLOB hdrs *.h)
+  file(GLOB utils_hdrs Utils/*.h)
+  file(GLOB shader_hdrs Shaders/*.h)
+  file(GLOB cuda_hdrs Cuda/*.cuh)
+  file(GLOB containers_hdrs Cuda/containers/*.hpp)
+endif()
+
 set(CUDA_ARCH_BIN "20 30 35 50 52 61" CACHE STRING "Specify 'real' GPU arch to build binaries for, BIN(PTX) format is supported. Example: 1.3 2.1(1.3) or 13 21(13)")
 set(CUDA_ARCH_PTX "" CACHE STRING "Specify 'virtual' PTX arch to build PTX intermediate code for. Example: 1.0 1.2 or 10 12")              
 
@@ -33,8 +41,14 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "--ftz=true;--prec-div=false;--prec-sqrt=
 
 CUDA_COMPILE(cuda_objs ${cuda})
 
-set(CMAKE_CXX_FLAGS "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+  
+if(WIN32)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
+  add_definitions(-DNOMINMAX)
+  set (EXTRA_WINDOWS_LIBS ${EXTRA_WINDOWS_LIBS} ws2_32)
+endif()
 
 add_library(efusion SHARED 
             ${srcs}
@@ -43,6 +57,11 @@ add_library(efusion SHARED
             ${cuda} 
             ${cuda_objs} 
             ${containers}
+            ${hdrs}
+            ${utils_hdrs}
+            ${shader_hdrs}
+            ${cuda_hdrs} 
+            ${containers_hdrs}
 )
 
 target_link_libraries(efusion
@@ -50,4 +69,11 @@ target_link_libraries(efusion
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}
                       ${SUITESPARSE_LIBRARIES}
+					  ${EXTRA_WINDOWS_LIBS}
 )
+
+INSTALL(TARGETS efusion
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION lib
+            ARCHIVE DESTINATION lib
+    )

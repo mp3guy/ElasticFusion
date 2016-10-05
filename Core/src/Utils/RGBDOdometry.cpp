@@ -77,7 +77,7 @@ RGBDOdometry::RGBDOdometry(int width,
     intr.fx = fx;
     intr.fy = fy;
 
-    iterations.reserve(NUM_PYRS);
+    iterations.resize(NUM_PYRS);
 
     depth_tmp.resize(NUM_PYRS);
 
@@ -104,7 +104,7 @@ RGBDOdometry::RGBDOdometry(int width,
     vmaps_tmp.create(height * 4 * width);
     nmaps_tmp.create(height * 4 * width);
 
-    minimumGradientMagnitudes.reserve(NUM_PYRS);
+    minimumGradientMagnitudes.resize(NUM_PYRS);
     minimumGradientMagnitudes[0] = 5;
     minimumGradientMagnitudes[1] = 3;
     minimumGradientMagnitudes[2] = 1;

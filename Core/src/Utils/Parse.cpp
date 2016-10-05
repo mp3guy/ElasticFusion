@@ -23,6 +23,12 @@ Parse::Parse()
 
 }
 
+const Parse & Parse::get()
+{
+  static const Parse instance;
+  return instance;
+}
+
 int Parse::arg(int argc, char** argv, const char* str, std::string &val) const
 {
     int index = findArg(argc, argv, str) + 1;
@@ -71,13 +77,20 @@ std::string Parse::shaderDir() const
 std::string Parse::baseDir() const
 {
     char buf[256];
-    int length = readlink("/proc/self/exe", buf, sizeof(buf));
-
+#ifdef WIN32
+    int length = GetModuleFileName(NULL,buf,sizeof(buf));
+#else
+    int length = readlink("/proc/self/exe",buf,sizeof(buf));
+#endif
     std::string currentVal;
     currentVal.append((char *)&buf, length);
 
-    currentVal = currentVal.substr(0, currentVal.rfind("/build/"));
-
+    currentVal = currentVal.substr(0, currentVal
+#ifdef WIN32
+      .rfind("\\build\\"));
+#else
+      .rfind("/build/"));
+#endif
     return currentVal;
 }
 

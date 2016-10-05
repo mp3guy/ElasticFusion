@@ -33,7 +33,7 @@ Afterwards install [OpenNI2](https://github.com/occipital/OpenNI2) and [Pangolin
 When you have all of the dependencies installed, build the Core followed by the GUI. 
 
 ## 1.2. Windows - Visual Studio ##
-* Windows 7 with Visual Studio 2013 Update 5 (Though other configurations may work)
+* Windows 7/10 with Visual Studio 2013 Update 5 (Though other configurations may work)
 * [CMake] (https://cmake.org/)
 * OpenGL
 * [CUDA >= 7.0](https://developer.nvidia.com/cuda-downloads)

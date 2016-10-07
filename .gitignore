@@ -2,3 +2,4 @@ build/
 deps/
 .project
 .cproject
+*.user

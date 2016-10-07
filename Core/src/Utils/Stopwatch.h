@@ -52,7 +52,7 @@
 #ifdef WIN32
 typedef char stopwatchPacketType;
 #else
-typedef unsigned char stopwatchSerialiseType;
+typedef unsigned char stopwatchPacketType;
 #endif
 
 #ifndef DISABLE_STOPWATCH

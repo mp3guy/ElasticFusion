@@ -20,9 +20,10 @@
 
 #ifdef WIN32
 #  include <Windows.h>
+#else
+#  include <dirent.h>
 #endif
 
-#include <dirent.h>
 #include <string>
 #include <cassert>
 #ifndef WIN32

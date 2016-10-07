@@ -46,7 +46,7 @@ When you have all of the dependencies installed, build the Core followed by the 
 
 Firstly install cmake and cuda. Then download and build from source OpenNI2, SuiteSparse. Next download Eigen (no need to build it since it is a header-only library). Then download and build from source Pangolin but pay attention to the following cmake settings. There will be a lot of dependencies where path was not found. That is OK except OPENNI2 and EIGEN3 (those should be set to valid paths). You also need to set MSVC_USE_STATIC_CRT to false in order to correctly link to ElasticFusion projects. Also, you can set BUILD_EXAMPLES to false since we don't need them and some were crashing on my machine.
 
-Next, build Core from source. Note that the build might crash if you are missing dirent.h (If so, look here https://github.com/tronkko/dirent). Finally, build GUI.
+Finally, build Core and GUI.
 
 
 # 2. Is there an easier way to build it? #

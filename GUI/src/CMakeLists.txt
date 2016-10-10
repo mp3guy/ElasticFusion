@@ -13,6 +13,19 @@ find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
 find_package(efusion REQUIRED)
 
+find_package(RealSense QUIET)
+if (REALSENSE_FOUND)
+  set(${REALSENSE_FOUND} TRUE)
+else()
+  set(${REALSENSE_FOUND} FALSE)
+endif()
+message(STATUS "librealsense found: ${REALSENSE_FOUND}")
+option(WITH_REALSENSE "Build with Intel RealSense support?" ${REALSENSE_FOUND})
+if(WITH_REALSENSE)
+  include_directories(${REALSENSE_INCLUDE_DIR})
+  add_definitions(-DWITH_REALSENSE)
+endif()
+
 if (WIN32)
   include_directories(${JPEG_INCLUDE_DIR})
 endif ()
@@ -63,6 +76,9 @@ target_link_libraries(ElasticFusion
                       ${EFUSION_LIBRARY}
                       ${OPENNI2_LIBRARY}
 )
+if(WITH_REALSENSE)
+  target_link_libraries(ElasticFusion ${REALSENSE_LIBRARY})
+endif()
 
 INSTALL(TARGETS ElasticFusion
             RUNTIME DESTINATION bin

@@ -18,6 +18,8 @@
 
 #include "LiveLogReader.h"
 
+#include "OpenNI2Interface.h"
+
 LiveLogReader::LiveLogReader(std::string file, bool flipColors)
  : LogReader(file, flipColors),
    lastFrameTime(-1),
@@ -25,16 +27,16 @@ LiveLogReader::LiveLogReader(std::string file, bool flipColors)
 {
     std::cout << "Creating live capture... "; std::cout.flush();
 
-	asus = new OpenNI2Interface(Resolution::getInstance().width(), Resolution::getInstance().height());
+	cam = new OpenNI2Interface(Resolution::getInstance().width(), Resolution::getInstance().height());
 
 	decompressionBufferDepth = new Bytef[Resolution::getInstance().numPixels() * 2];
 
 	decompressionBufferImage = new Bytef[Resolution::getInstance().numPixels() * 3];
 
-    if(!asus->ok())
+    if(!cam->ok())
     {
         std::cout << "failed!" << std::endl;
-        std::cout << asus->error();
+        std::cout << cam->error();
     }
     else
     {
@@ -42,13 +44,13 @@ LiveLogReader::LiveLogReader(std::string file, bool flipColors)
 
         std::cout << "Waiting for first frame"; std::cout.flush();
 
-        int lastDepth = asus->latestDepthIndex.getValue();
+        int lastDepth = cam->latestDepthIndex.getValue();
 
         do
         {
           std::this_thread::sleep_for(std::chrono::microseconds(33333));
             std::cout << "."; std::cout.flush();
-            lastDepth = asus->latestDepthIndex.getValue();
+            lastDepth = cam->latestDepthIndex.getValue();
         } while(lastDepth == -1);
 
         std::cout << " got it!" << std::endl;
@@ -61,31 +63,31 @@ LiveLogReader::~LiveLogReader()
 
     delete [] decompressionBufferImage;
 
-	delete asus;
+	delete cam;
 }
 
 void LiveLogReader::getNext()
 {
-    int lastDepth = asus->latestDepthIndex.getValue();
+    int lastDepth = cam->latestDepthIndex.getValue();
 
     assert(lastDepth != -1);
 
-    int bufferIndex = lastDepth % OpenNI2Interface::numBuffers;
+    int bufferIndex = lastDepth % CameraInterface::numBuffers;
 
     if(bufferIndex == lastGot)
     {
         return;
     }
 
-    if(lastFrameTime == asus->frameBuffers[bufferIndex].second)
+    if(lastFrameTime == cam->frameBuffers[bufferIndex].second)
     {
         return;
     }
 
-    memcpy(&decompressionBufferDepth[0], asus->frameBuffers[bufferIndex].first.first, Resolution::getInstance().numPixels() * 2);
-    memcpy(&decompressionBufferImage[0], asus->frameBuffers[bufferIndex].first.second, Resolution::getInstance().numPixels() * 3);
+    memcpy(&decompressionBufferDepth[0], cam->frameBuffers[bufferIndex].first.first, Resolution::getInstance().numPixels() * 2);
+    memcpy(&decompressionBufferImage[0], cam->frameBuffers[bufferIndex].first.second,Resolution::getInstance().numPixels() * 3);
 
-    lastFrameTime = asus->frameBuffers[bufferIndex].second;
+    lastFrameTime = cam->frameBuffers[bufferIndex].second;
 
     timestamp = lastFrameTime;
 
@@ -124,6 +126,6 @@ bool LiveLogReader::hasMore()
 
 void LiveLogReader::setAuto(bool value)
 {
-    asus->setAutoExposure(value);
-    asus->setAutoWhiteBalance(value);
+    cam->setAutoExposure(value);
+    cam->setAutoWhiteBalance(value);
 }

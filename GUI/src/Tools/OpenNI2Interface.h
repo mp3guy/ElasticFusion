@@ -27,8 +27,9 @@
 #include <map>
 
 #include "ThreadMutexObject.h"
+#include "CameraInterface.h"
 
-class OpenNI2Interface
+class OpenNI2Interface : public CameraInterface
 {
     public:
         OpenNI2Interface(int inWidth = 640, int inHeight = 480, int fps = 30);
@@ -53,10 +54,6 @@ class OpenNI2Interface
             errorText.erase(std::remove_if(errorText.begin(), errorText.end(), &OpenNI2Interface::isTab), errorText.end());
             return errorText;
         }
-
-        static const int numBuffers = 10;
-        ThreadMutexObject<int> latestDepthIndex;
-        std::pair<std::pair<uint8_t *, uint8_t *>, int64_t> frameBuffers[numBuffers];
 
         class RGBCallback : public openni::VideoStream::NewFrameListener
         {

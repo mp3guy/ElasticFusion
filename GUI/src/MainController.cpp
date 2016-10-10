@@ -55,7 +55,7 @@ MainController::MainController(int argc, char * argv[])
     {
         logReader = new LiveLogReader(logFile, Parse::get().arg(argc, argv, "-f", empty) > -1);
 
-        good = ((LiveLogReader *)logReader)->asus->ok();
+        good = ((LiveLogReader *)logReader)->cam->ok();
     }
 
     if(Parse::get().arg(argc, argv, "-p", poseFile) > 0)

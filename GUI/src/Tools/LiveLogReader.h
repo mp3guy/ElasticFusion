@@ -31,7 +31,7 @@
 #include <Utils/Parse.h>
 
 #include "LogReader.h"
-#include "OpenNI2Interface.h"
+#include "CameraInterface.h"
 
 class LiveLogReader : public LogReader
 {
@@ -70,7 +70,7 @@ class LiveLogReader : public LogReader
 
         void setAuto(bool value);
 
-		OpenNI2Interface * asus;
+		CameraInterface * cam;
 
 	private:
 		int64_t lastFrameTime;

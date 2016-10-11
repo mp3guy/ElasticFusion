@@ -30,17 +30,19 @@ if(WIN32)
   file(GLOB tools_hdrs Tools/*.h)
 endif()
 
-if(WIN32)
-  set(ADDITIONAL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-endif()
-set(CMAKE_CXX_FLAGS ${ADDITIONAL_CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
 
 if(WIN32)
   add_definitions(-Dlinux=0)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
+  add_definitions(-DNOMINMAX)
+  set(ADDITIONAL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  set(EXTRA_WINDOWS_LIBS ${EXTRA_WINDOWS_LIBS} ws2_32 ${JPEG_LIBRARY})
 else()
   add_definitions(-Dlinux=1)
 endif()
+
+set(CMAKE_CXX_FLAGS ${ADDITIONAL_CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
 
 add_executable(ElasticFusion 
                ${srcs}
@@ -48,12 +50,6 @@ add_executable(ElasticFusion
                ${hdrs}
                ${tools_hdrs}
 )
-
-if(WIN32)
-  add_definitions(-DWIN32_LEAN_AND_MEAN)
-  add_definitions(-DNOMINMAX)
-  set (EXTRA_WINDOWS_LIBS ${EXTRA_WINDOWS_LIBS} ws2_32 ${JPEG_LIBRARY})
-endif()
 
 target_link_libraries(ElasticFusion
 					  ${EXTRA_WINDOWS_LIBS}

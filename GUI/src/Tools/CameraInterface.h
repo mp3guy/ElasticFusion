@@ -1,7 +1,5 @@
 #pragma once
 
-#include <OpenNI.h>
-#include <PS1080.h>
 #include <string>
 #include <iostream>
 #include <algorithm>

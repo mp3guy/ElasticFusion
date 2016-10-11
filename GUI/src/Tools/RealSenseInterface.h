@@ -61,7 +61,6 @@ public:
     }
 
   private:
-    openni::VideoFrameRef frame;
     int64_t & lastRgbTime;
     ThreadMutexObject<int> & latestRgbIndex;
     std::pair<uint8_t *,int64_t> * rgbBuffers;
@@ -112,7 +111,6 @@ public:
     }
 
   private:
-    openni::VideoFrameRef frame;
     int64_t & lastDepthTime;
     ThreadMutexObject<int> & latestDepthIndex;
     ThreadMutexObject<int> & latestRgbIndex;

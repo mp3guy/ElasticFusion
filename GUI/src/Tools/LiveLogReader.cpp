@@ -19,21 +19,27 @@
 #include "LiveLogReader.h"
 
 #include "OpenNI2Interface.h"
+#include "RealSenseInterface.h"
 
-LiveLogReader::LiveLogReader(std::string file, bool flipColors)
+LiveLogReader::LiveLogReader(std::string file, bool flipColors, CameraType type)
  : LogReader(file, flipColors),
    lastFrameTime(-1),
    lastGot(-1)
 {
     std::cout << "Creating live capture... "; std::cout.flush();
 
-	cam = new OpenNI2Interface(Resolution::getInstance().width(), Resolution::getInstance().height());
+    if(type == CameraType::OpenNI2)
+      cam = new OpenNI2Interface(Resolution::getInstance().width(),Resolution::getInstance().height());
+    else if(type == CameraType::RealSense)
+      cam = new RealSenseInterface(Resolution::getInstance().width(), Resolution::getInstance().height());
+    else
+      cam = nullptr;
 
 	decompressionBufferDepth = new Bytef[Resolution::getInstance().numPixels() * 2];
 
 	decompressionBufferImage = new Bytef[Resolution::getInstance().numPixels() * 3];
 
-    if(!cam->ok())
+    if(!cam || !cam->ok())
     {
         std::cout << "failed!" << std::endl;
         std::cout << cam->error();

@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <map>
 
+#ifdef WITH_REALSENSE
 #include "librealsense/rs.hpp"
+#endif
 
 #include "ThreadMutexObject.h"
 #include "CameraInterface.h"
@@ -33,6 +35,7 @@ public:
     return errorText;
   }
 
+#ifdef WITH_REALSENSE
   struct RGBCallback
   {
   public:
@@ -118,13 +121,16 @@ public:
     std::pair<uint8_t *,int64_t> * rgbBuffers;
     std::pair<std::pair<uint8_t *,uint8_t *>,int64_t> * frameBuffers;
   };
+#endif
 
 private:
+#ifdef WITH_REALSENSE
   rs::device *dev;
   rs::context ctx;
 
   RGBCallback * rgbCallback;
   DepthCallback * depthCallback;
+#endif
 
   bool initSuccessful;
   std::string errorText;

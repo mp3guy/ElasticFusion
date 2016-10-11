@@ -1,7 +1,7 @@
 #include "RealSenseInterface.h"
 #include <functional>
 
-
+#ifdef WITH_REALSENSE
 RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
   : width(inWidth),
   height(inHeight),
@@ -96,3 +96,36 @@ bool RealSenseInterface::getAutoWhiteBalance()
 {
   return dev->get_option(rs::option::color_enable_auto_white_balance);
 }
+#else
+
+RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
+  : width(inWidth),
+  height(inHeight),
+  fps(inFps),
+  initSuccessful(false)
+{
+  errorText = "Compiled without Intel RealSense library";
+}
+
+RealSenseInterface::~RealSenseInterface()
+{
+}
+
+void RealSenseInterface::setAutoExposure(bool value)
+{
+}
+
+void RealSenseInterface::setAutoWhiteBalance(bool value)
+{
+}
+
+bool RealSenseInterface::getAutoExposure()
+{
+  return false;
+}
+
+bool RealSenseInterface::getAutoWhiteBalance()
+{
+  return false;
+}
+#endif

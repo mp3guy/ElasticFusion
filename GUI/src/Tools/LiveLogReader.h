@@ -36,7 +36,12 @@
 class LiveLogReader : public LogReader
 {
 	public:
-		LiveLogReader(std::string file, bool flipColors);
+    enum CameraType
+    {
+      OpenNI2,RealSense
+    };
+
+		LiveLogReader(std::string file, bool flipColors, CameraType type);
 
 		virtual ~LiveLogReader();
 

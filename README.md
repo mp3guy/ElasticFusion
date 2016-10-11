@@ -21,6 +21,7 @@ Please cite this work if you make use of our system in any of your own endeavors
 * zlib
 * libjpeg
 * [Pangolin](https://github.com/stevenlovegrove/Pangolin)
+* [librealsense] (https://github.com/IntelRealSense/librealsense) - Optional (for Intel RealSense cameras)
 
 Firstly, add [nVidia's official CUDA repository](https://developer.nvidia.com/cuda-downloads) to your apt sources, then run the following command to pull in most dependencies from the official repos:
 
@@ -43,6 +44,7 @@ When you have all of the dependencies installed, build the Core followed by the 
 * [Pangolin](https://github.com/stevenlovegrove/Pangolin)
   * zlib (Pangolin can automatically download and build this)
   * libjpeg (Pangolin can automatically download and build this)
+* [librealsense] (https://github.com/IntelRealSense/librealsense) - Optional (for Intel RealSense cameras)
 
 Firstly install cmake and cuda. Then download and build from source OpenNI2, SuiteSparse. Next download Eigen (no need to build it since it is a header-only library). Then download and build from source Pangolin but pay attention to the following cmake settings. There will be a lot of dependencies where path was not found. That is OK except OPENNI2 and EIGEN3 (those should be set to valid paths). You also need to set MSVC_USE_STATIC_CRT to false in order to correctly link to ElasticFusion projects. Also, you can set BUILD_EXAMPLES to false since we don't need them and some were crashing on my machine.
 

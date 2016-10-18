@@ -53,9 +53,20 @@ MainController::MainController(int argc, char * argv[])
     }
     else
     {
-        logReader = new LiveLogReader(logFile, Parse::get().arg(argc, argv, "-f", empty) > -1);
+        bool flipColors = Parse::get().arg(argc,argv,"-f",empty) > -1;
+        logReader = new LiveLogReader(logFile, flipColors, LiveLogReader::CameraType::OpenNI2);
 
-        good = ((LiveLogReader *)logReader)->asus->ok();
+        good = ((LiveLogReader *)logReader)->cam->ok();
+
+#ifdef WITH_REALSENSE
+        if(!good)
+        {
+          delete logReader;
+          logReader = new LiveLogReader(logFile, flipColors, LiveLogReader::CameraType::RealSense);
+
+          good = ((LiveLogReader *)logReader)->cam->ok();
+        }
+#endif
     }
 
     if(Parse::get().arg(argc, argv, "-p", poseFile) > 0)

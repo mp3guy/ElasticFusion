@@ -31,12 +31,17 @@
 #include <Utils/Parse.h>
 
 #include "LogReader.h"
-#include "OpenNI2Interface.h"
+#include "CameraInterface.h"
 
 class LiveLogReader : public LogReader
 {
 	public:
-		LiveLogReader(std::string file, bool flipColors);
+    enum CameraType
+    {
+      OpenNI2,RealSense
+    };
+
+		LiveLogReader(std::string file, bool flipColors, CameraType type);
 
 		virtual ~LiveLogReader();
 
@@ -70,7 +75,7 @@ class LiveLogReader : public LogReader
 
         void setAuto(bool value);
 
-		OpenNI2Interface * asus;
+		CameraInterface * cam;
 
 	private:
 		int64_t lastFrameTime;

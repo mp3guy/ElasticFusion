@@ -25,4 +25,7 @@ set(EFUSION_LIBRARIES ${EFUSION_LIBRARY})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(EFUSION DEFAULT_MSG EFUSION_LIBRARY EFUSION_INCLUDE_DIR)
-#mark_as_advanced(EFUSION_LIBRARY EFUSION_INCLUDE_DIR)
+
+if(NOT WIN32)
+  mark_as_advanced(EFUSION_LIBRARY EFUSION_INCLUDE_DIR)
+endif()

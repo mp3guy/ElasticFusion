@@ -214,8 +214,13 @@ class Stopwatch
 
             for(std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end(); it++)
             {
+#ifdef __linux__
                 valuePointer = (float *)mempcpy(valuePointer, it->first.c_str(), it->first.length() + 1);
                 *valuePointer++ = it->second;
+#else
+                valuePointer = (float *)(((char*)memcpy(valuePointer, it->first.c_str(), it->first.length() + 1)) + (it->first.length() + 1));
+                *valuePointer++ = it->second;
+#endif
             }
 
             return (stopwatchPacketType *)dataPacket;

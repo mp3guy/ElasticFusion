@@ -18,11 +18,14 @@ if(WIN32)
   find_package(JPEG REQUIRED)
 endif()
 
+find_package(LAPACK REQUIRED)
+find_package(BLAS REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Pangolin 0.1 REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
 find_package(efusion REQUIRED)
+find_package(SuiteSparse REQUIRED)
 
 if(WIN32)
   find_package(RealSense QUIET)
@@ -84,7 +87,11 @@ target_link_libraries(ElasticFusion
                       ${EXTRA_LIBS}
                       ${EFUSION_LIBRARY}
                       ${OPENNI2_LIBRARY}
+                      ${SUITESPARSE_LIBRARIES}
+                      ${BLAS_LIBRARIES}
+                      ${LAPACK_LIBRARIES}
 )
+
 
 INSTALL(TARGETS ElasticFusion
         RUNTIME DESTINATION bin

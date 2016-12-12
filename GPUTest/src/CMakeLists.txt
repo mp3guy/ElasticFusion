@@ -24,9 +24,10 @@ add_executable(GPUTest
 )
 
 target_link_libraries(GPUTest
+                      ${efusion_LIBRARY}
                       ${Eigen_LIBRARIES}
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}
-                      ${efusion_LIBRARY}
+                      ${SUITESPARSE_LIBRARIES}
 )
 

@@ -5,6 +5,7 @@ Real-time dense visual SLAM system capable of capturing comprehensive dense glob
 # Related Publications #
 Please cite this work if you make use of our system in any of your own endeavors:
 
+* **[ElasticFusion: Real-Time Dense SLAM and Light Source Estimation](http://www.thomaswhelan.ie/Whelan16ijrr.pdf)**, *T. Whelan, R. F. Salas-Moreno, B. Glocker, A. J. Davison and S. Leutenegger*, IJRR '16
 * **[ElasticFusion: Dense SLAM Without A Pose Graph](http://thomaswhelan.ie/Whelan15rss.pdf)**, *T. Whelan, S. Leutenegger, R. F. Salas-Moreno, B. Glocker and A. J. Davison*, RSS '15
 
 # 1. What do I need to build it? #

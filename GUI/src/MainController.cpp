@@ -83,7 +83,7 @@ MainController::MainController(int argc, char * argv[])
     fernThresh = 0.3095f;
 
     timeDelta = 200;
-    icpCountThresh = 35000;
+    icpCountThresh = 40000;
     start = 1;
     so3 = !(Parse::get().arg(argc, argv, "-nso", empty) > -1);
     end = std::numeric_limits<unsigned short>::max(); //Funny bound, since we predict times in this format really!

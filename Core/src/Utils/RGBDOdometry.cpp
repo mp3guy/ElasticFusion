@@ -160,7 +160,7 @@ void RGBDOdometry::initICP(GPUTexture * predictedVertices, GPUTexture * predicte
     for(int i = 1; i < NUM_PYRS; ++i)
     {
         resizeVMap(vmaps_curr_[i - 1], vmaps_curr_[i]);
-        resizeNMap(vmaps_curr_[i - 1], vmaps_curr_[i]);
+        resizeNMap(nmaps_curr_[i - 1], nmaps_curr_[i]);
     }
 
     cudaDeviceSynchronize();

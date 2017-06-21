@@ -459,13 +459,14 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
             }
 
             float sigmaVal = std::sqrt((float)sigma / rgbSize == 0 ? 1 : rgbSize);
+            float rgbError = std::sqrt(sigma) / (rgbSize == 0 ? 1 : rgbSize);
 
-            if(rgbOnly && sqrt(sigma) / rgbSize > lastRGBError)
+            if(rgbOnly && rgbError > lastRGBError)
             {
                 break;
             }
 
-            lastRGBError = sqrt(sigma) / rgbSize;
+            lastRGBError = rgbError;
             lastRGBCount = rgbSize;
 
             if(rgbOnly)

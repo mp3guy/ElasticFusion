@@ -53,7 +53,7 @@ Finally, build Core and GUI.
 
 
 # 2. Is there an easier way to build it? #
-Yes, if you run the *build.sh* script on a fresh clean install of Ubuntu 14.04 or 15.04, enter your password for sudo a few times and wait a few minutes all dependencies will get downloaded and installed and it should build everything correctly. This has not been tested on anything but fresh installs, so I would advise using it with caution if you already have some of the dependencies installed. It might also work on 16.04, but not guaranteed (modify it to coerce it into the 15.04 path).
+Yes, if you run the *build.sh* script on a fresh clean install of Ubuntu 14.04, 15.04, or 16.04, enter your password for sudo a few times and wait a few minutes all dependencies will get downloaded and installed and it should build everything correctly. This has not been tested on anything but fresh installs, so I would advise using it with caution if you already have some of the dependencies installed.
 
 # 3. Installation issues #
 

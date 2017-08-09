@@ -131,6 +131,14 @@ Initialise the static configuration parameters once somewhere at the start of yo
     Intrinsics::getInstance(528, 528, 320, 240);
 ```
 
+Create an OpenGL context before creating an ElasticFusion object, as ElasticFusion uses OpenGL internally. You can do this whatever way you wish, using Pangolin is probably easiest given it's a dependency:
+```cpp
+    pangolin::Params windowParams;
+    windowParams.Set("SAMPLE_BUFFERS", 0);
+    windowParams.Set("SAMPLES", 0);
+    pangolin::CreateWindowAndBind("Main", 1280, 800, windowParams);
+```
+
 Make an ElasticFusion object and start using it:
 ```cpp
     ElasticFusion eFusion;

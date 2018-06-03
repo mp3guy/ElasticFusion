@@ -15,131 +15,130 @@
 
 class RealSenseInterface : public CameraInterface
 {
-public:
-  RealSenseInterface(int width = 640,int height = 480,int fps = 30);
-  virtual ~RealSenseInterface();
+    public:
+        RealSenseInterface(int width = 640,int height = 480,int fps = 30);
+        virtual ~RealSenseInterface();
 
-  const int width,height,fps;
+        const int width,height,fps;
 
-  bool getAutoExposure();
-  bool getAutoWhiteBalance();
-  virtual void setAutoExposure(bool value);
-  virtual void setAutoWhiteBalance(bool value);
+        bool getAutoExposure();
+        bool getAutoWhiteBalance();
+        virtual void setAutoExposure(bool value);
+        virtual void setAutoWhiteBalance(bool value);
 
-  virtual bool ok()
-  {
-    return initSuccessful;
-  }
+        virtual bool ok()
+        {
+            return initSuccessful;
+        }
 
-  virtual std::string error()
-  {
-    return errorText;
-  }
+        virtual std::string error()
+        {
+            return errorText;
+        }
 
 #ifdef WITH_REALSENSE
-  struct RGBCallback
-  {
-  public:
-    RGBCallback(int64_t & lastRgbTime,
-      ThreadMutexObject<int> & latestRgbIndex,
-      std::pair<uint8_t *,int64_t> * rgbBuffers)
-      : lastRgbTime(lastRgbTime),
-      latestRgbIndex(latestRgbIndex),
-      rgbBuffers(rgbBuffers)
-    {
-    }
+        class RGBCallback
+        {
+            public:
+                RGBCallback(int64_t & lastRgbTime,
+                        ThreadMutexObject<int> & latestRgbIndex,
+                        std::pair<uint8_t *,int64_t> * rgbBuffers)
+                    : lastRgbTime(lastRgbTime),
+                    latestRgbIndex(latestRgbIndex),
+                    rgbBuffers(rgbBuffers)
+            {
+            }
 
-    void operator()(rs2::video_frame frame)
-    {
-      lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                void proccessor(rs2::video_frame frame)
+                {
+                    lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::cout << "lastRgbTime = " << lastRgbTime << std::endl;
+                    int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
 
-      int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
+                    memcpy(rgbBuffers[bufferIndex].first,frame.get_data(),
+                            frame.get_width() * frame.get_height() * 3);
 
-      memcpy(rgbBuffers[bufferIndex].first,frame.get_data(),
-        frame.get_width() * frame.get_height() * 3);
+                    rgbBuffers[bufferIndex].second = lastRgbTime;
 
-      rgbBuffers[bufferIndex].second = lastRgbTime;
+                    latestRgbIndex++;
+                }
 
-      latestRgbIndex++;
-    }
+            private:
+                int64_t & lastRgbTime;
+                ThreadMutexObject<int> & latestRgbIndex;
+                std::pair<uint8_t *,int64_t> * rgbBuffers;
+        };
 
-  private:
-    int64_t & lastRgbTime;
-    ThreadMutexObject<int> & latestRgbIndex;
-    std::pair<uint8_t *,int64_t> * rgbBuffers;
-  };
+        class DepthCallback
+        {
+            public:
+                DepthCallback(int64_t & lastDepthTime,
+                        ThreadMutexObject<int> & latestDepthIndex,
+                        ThreadMutexObject<int> & latestRgbIndex,
+                        std::pair<uint8_t *,int64_t> * rgbBuffers,
+                        std::pair<std::pair<uint8_t *,uint8_t *>,int64_t> * frameBuffers)
+                    : lastDepthTime(lastDepthTime),
+                    latestDepthIndex(latestDepthIndex),
+                    latestRgbIndex(latestRgbIndex),
+                    rgbBuffers(rgbBuffers),
+                    frameBuffers(frameBuffers)
+                {}
 
-  struct DepthCallback
-  {
-  public:
-    DepthCallback(int64_t & lastDepthTime,
-      ThreadMutexObject<int> & latestDepthIndex,
-      ThreadMutexObject<int> & latestRgbIndex,
-      std::pair<uint8_t *,int64_t> * rgbBuffers,
-      std::pair<std::pair<uint8_t *,uint8_t *>,int64_t> * frameBuffers)
-      : lastDepthTime(lastDepthTime),
-      latestDepthIndex(latestDepthIndex),
-      latestRgbIndex(latestRgbIndex),
-      rgbBuffers(rgbBuffers),
-      frameBuffers(frameBuffers)
-    {
-    }
+                void proccessor(rs2::video_frame frame)
+                {
+                    lastDepthTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::cout << "lastDepthTime = " << lastDepthTime << std::endl;
+                    int bufferIndex = (latestDepthIndex.getValue() + 1) % numBuffers;
 
-    void operator()(rs2::video_frame frame)
-    {
-      lastDepthTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                    // The multiplication by 2 is here because the depth is actually uint16_t
+                    memcpy(frameBuffers[bufferIndex].first.first,frame.get_data(),
+                            frame.get_width() * frame.get_height() * 2);
 
-      int bufferIndex = (latestDepthIndex.getValue() + 1) % numBuffers;
+                    frameBuffers[bufferIndex].second = lastDepthTime;
 
-      // The multiplication by 2 is here because the depth is actually uint16_t
-      memcpy(frameBuffers[bufferIndex].first.first,frame.get_data(),
-        frame.get_width() * frame.get_height() * 2);
+                    int lastImageVal = latestRgbIndex.getValue();
 
-      frameBuffers[bufferIndex].second = lastDepthTime;
+                    if(lastImageVal == -1)
+                    {
+                        return;
+                    }
 
-      int lastImageVal = latestRgbIndex.getValue();
+                    lastImageVal %= numBuffers;
 
-      if(lastImageVal == -1)
-      {
-        return;
-      }
+                    memcpy(frameBuffers[bufferIndex].first.second,rgbBuffers[lastImageVal].first,
+                            frame.get_width() * frame.get_height() * 3);
 
-      lastImageVal %= numBuffers;
+                    latestDepthIndex++;
+                }
 
-      memcpy(frameBuffers[bufferIndex].first.second,rgbBuffers[lastImageVal].first,
-        frame.get_width() * frame.get_height() * 3);
+            private:
+                int64_t & lastDepthTime;
+                ThreadMutexObject<int> & latestDepthIndex;
+                ThreadMutexObject<int> & latestRgbIndex;
 
-      latestDepthIndex++;
-    }
-
-  private:
-    int64_t & lastDepthTime;
-    ThreadMutexObject<int> & latestDepthIndex;
-    ThreadMutexObject<int> & latestRgbIndex;
-
-    std::pair<uint8_t *,int64_t> * rgbBuffers;
-    std::pair<std::pair<uint8_t *,uint8_t *>,int64_t> * frameBuffers;
-  };
+                std::pair<uint8_t *,int64_t> * rgbBuffers;
+                std::pair<std::pair<uint8_t *,uint8_t *>,int64_t> * frameBuffers;
+        };
 #endif
 
-private:
+    private:
 #ifdef WITH_REALSENSE
-  rs2::device *dev;
-  rs2::context ctx;
+        rs2::device *dev;
+        rs2::context ctx;
 
-  RGBCallback * rgbCallback;
-  DepthCallback * depthCallback;
+        RGBCallback * rgbCallback;
+        DepthCallback * depthCallback;
 #endif
 
-  bool initSuccessful;
-  std::string errorText;
-  
-  ThreadMutexObject<int> latestRgbIndex;
-  std::pair<uint8_t *,int64_t> rgbBuffers[numBuffers];
+        bool initSuccessful;
+        std::string errorText;
 
-  int64_t lastRgbTime;
-  int64_t lastDepthTime;
+        ThreadMutexObject<int> latestRgbIndex;
+        std::pair<uint8_t *,int64_t> rgbBuffers[numBuffers];
+
+        int64_t lastRgbTime;
+        int64_t lastDepthTime;
 
 };

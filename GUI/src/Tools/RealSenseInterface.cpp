@@ -19,9 +19,7 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
     std::cout << "start" << std::endl;
     //dev->enable_stream(rs2::stream::depth,width,height,rs2::format::z16,fps);
     //dev->enable_stream(rs2::stream::color,width,height,rs2::format::rgb8,fps);
-
-    rs2::pipeline pipe;
-    pipe.start();
+    std::cout << dev->get_info(RS2_CAMERA_INFO_NAME) << " " << dev->get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) << std::endl; 
 
     latestDepthIndex.assign(-1);
     latestRgbIndex.assign(-1);
@@ -39,9 +37,11 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
         frameBuffers[i] = std::pair<std::pair<uint8_t *,uint8_t *>,int64_t>(std::pair<uint8_t *,uint8_t *>(newDepth,newImage),0);
     }
 
-    setAutoExposure(true);
-    setAutoWhiteBalance(true);
+    //setAutoExposure(true);
+    //setAutoWhiteBalance(true);
 
+    rs2::pipeline pipe;
+    pipe.start();
     rgbCallback = new RGBCallback(lastRgbTime,
             latestRgbIndex,
             rgbBuffers);
@@ -53,16 +53,16 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
             frameBuffers);
 	rs2::frame_queue queue(numBuffers);
 	std::thread t([&]() {
-    while (true)
-    {
-        rs2::depth_frame frame;
-        if (queue.poll_for_frame(&frame))
+        while (true)
         {
-	        frame.get_data();
+            auto frames = pipe.wait_for_frames();
+            rs2::video_frame current_depth_frame = frames.get_depth_frame();
+            rs2::video_frame current_color_frame = frames.get_color_frame();
+            rgbCallback->proccessor(current_color_frame);
+            depthCallback->proccessor(current_depth_frame);
         }
-    }
-});
-t.detach();
+    });
+    t.detach();
 //    dev->set_frame_callback(rs2::stream::depth,*depthCallback);
 //    dev->set_frame_callback(rs2::stream::color,*rgbCallback);
 

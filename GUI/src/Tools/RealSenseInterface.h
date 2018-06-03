@@ -4,9 +4,10 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
-
+#include <cstring>
+#include <cstdio>
 #ifdef WITH_REALSENSE
-#include "librealsense/rs.hpp"
+#include "librealsense2/rs.hpp"
 #endif
 
 #include "ThreadMutexObject.h"
@@ -48,7 +49,7 @@ public:
     {
     }
 
-    void operator()(rs::frame frame)
+    void operator()(rs2::video_frame frame)
     {
       lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -85,7 +86,7 @@ public:
     {
     }
 
-    void operator()(rs::frame frame)
+    void operator()(rs2::video_frame frame)
     {
       lastDepthTime = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -125,8 +126,8 @@ public:
 
 private:
 #ifdef WITH_REALSENSE
-  rs::device *dev;
-  rs::context ctx;
+  rs2::device *dev;
+  rs2::context ctx;
 
   RGBCallback * rgbCallback;
   DepthCallback * depthCallback;

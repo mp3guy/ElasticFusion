@@ -92,6 +92,10 @@ class RealSenseInterface : public CameraInterface
                     std::cout << "lastDepthTime = " << lastDepthTime << std::endl;
                     int bufferIndex = (latestDepthIndex.getValue() + 1) % numBuffers;
 
+                    static unsigned total_bfr = 0;
+                    total_bfr ++;
+                    std::cout << "latest buffer index = "<< bufferIndex<< ",total_bfr = "<<total_bfr << std::endl;
+
                     // The multiplication by 2 is here because the depth is actually uint16_t
                     memcpy(frameBuffers[bufferIndex].first.first,frame.get_data(),
                             frame.get_width() * frame.get_height() * 2);

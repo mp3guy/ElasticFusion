@@ -40,8 +40,6 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
     //setAutoExposure(true);
     //setAutoWhiteBalance(true);
 
-    rs2::pipeline pipe;
-    pipe.start();
     rgbCallback = new RGBCallback(lastRgbTime,
             latestRgbIndex,
             rgbBuffers);
@@ -53,6 +51,8 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
             frameBuffers);
 	rs2::frame_queue queue(numBuffers);
 	std::thread t([&]() {
+        rs2::pipeline pipe;
+        pipe.start();
         while (true)
         {
             auto frames = pipe.wait_for_frames();

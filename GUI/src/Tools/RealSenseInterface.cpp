@@ -56,7 +56,7 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
         while (true)
         {
             auto frames = pipe.wait_for_frames();
-            rs2::video_frame current_depth_frame = frames.get_depth_frame();
+            rs2::depth_frame current_depth_frame = frames.get_depth_frame();
             rs2::video_frame current_color_frame = frames.get_color_frame();
             rgbCallback->proccessor(current_color_frame);
             depthCallback->proccessor(current_depth_frame);

@@ -85,7 +85,7 @@ class RealSenseInterface : public CameraInterface
                     frameBuffers(frameBuffers)
                 {}
 
-                void proccessor(rs2::video_frame frame)
+                void proccessor(rs2::depth_frame frame)
                 {
                     lastDepthTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::system_clock::now().time_since_epoch()).count();

@@ -26,9 +26,7 @@ find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
 find_package(efusion REQUIRED)
 find_package(SuiteSparse REQUIRED)
-
-#find_package(RealSense2 QUIET)
-#message(STATUS "librealsense found: ${REALSENSE_FOUND}")
+find_package(RealSense2 REQUIRED)
 #option(WITH_REALSENSE2 "Build with Intel RealSense support?" ${REALSENSE2_FOUND})
 
 if(WIN32)
@@ -41,10 +39,11 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EFUSION_INCLUDE_DIR})
 include_directories(${OPENNI2_INCLUDE_DIR})
+include_directories(${REALSENSE2_INCLUDE_DIR})
 
-include_directories("/usr/include/librealsense2")
+#include_directories("/usr/include/librealsense2")
 add_definitions(-DWITH_REALSENSE)
-set(EXTRA_LIBS ${EXTRA_LIBS} "realsense2")
+#set(EXTRA_LIBS ${EXTRA_LIBS} "realsense2")
 
 file(GLOB srcs *.cpp)
 file(GLOB tools_srcs Tools/*.cpp)
@@ -65,7 +64,6 @@ else()
 endif()
 
 set(CMAKE_CXX_FLAGS ${ADDITIONAL_CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
 
 add_executable(ElasticFusion 
                ${srcs}
@@ -85,6 +83,7 @@ target_link_libraries(ElasticFusion
                       ${SUITESPARSE_LIBRARIES}
                       ${BLAS_LIBRARIES}
                       ${LAPACK_LIBRARIES}
+                      ${REALSENSE2_LIBRARY}
 )
 
 

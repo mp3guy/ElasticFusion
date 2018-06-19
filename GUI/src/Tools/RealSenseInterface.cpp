@@ -12,30 +12,26 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
 {
 
     auto list = ctx.query_devices();
-    if (list.size() == 0) 
-        throw std::runtime_error("No device detected. Is it plugged in?");
+    if (list.size() == 0){
+        errorText = "No device connected.";
+        initSuccessful = false;
+        return;
+    }
 
-
-    std::cout<< "width:"<<inWidth <<" Height:"<< inHeight << ", fps:"<<inFps << std::endl;
 
     rs2::device tmp_dev = list.front();
     dev = &tmp_dev;
-    std::cout << "start" << std::endl;
-    //dev->enable_stream(rs2::stream::depth,width,height,rs2::format::z16,fps);
-    //dev->enable_stream(rs2::stream::color,width,height,rs2::format::rgb8,fps);
-    std::cout << dev->get_info(RS2_CAMERA_INFO_NAME) << " " << dev->get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) << std::endl; 
+    std::cout << dev->get_info(RS2_CAMERA_INFO_NAME) << " " << dev->get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) << std::endl;
 
     latestDepthIndex.assign(-1);
     latestRgbIndex.assign(-1);
 
-    for(int i = 0; i < numBuffers; i++)
-    {
+    for (int i = 0; i < numBuffers; i++){
         uint8_t * newImage = (uint8_t *)calloc(width * height * 3,sizeof(uint8_t));
         rgbBuffers[i] = std::pair<uint8_t *,int64_t>(newImage,0);
     }
 
-    for(int i = 0; i < numBuffers; i++)
-    {
+    for (int i = 0; i < numBuffers; i++){
         uint8_t * newDepth = (uint8_t *)calloc(width * height * 2,sizeof(uint8_t));
         uint8_t * newImage = (uint8_t *)calloc(width * height * 3,sizeof(uint8_t));
         frameBuffers[i] = std::pair<std::pair<uint8_t *,uint8_t *>,int64_t>(std::pair<uint8_t *,uint8_t *>(newDepth,newImage),0);
@@ -58,11 +54,9 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
         /* rs2 hight level api start*/
         rs2::pipeline pipe;
         rs2::config cfg;
-        std::cout<< "width:"<<inWidth <<" Height:"<< inHeight << ", fps:"<<inFps << std::endl;
         cfg.enable_stream(RS2_STREAM_COLOR, inWidth, inHeight, RS2_FORMAT_RGB8,inFps);
         cfg.enable_stream(RS2_STREAM_DEPTH, inWidth, inHeight, RS2_FORMAT_Z16, inFps);
         pipe.start(cfg);
-        std::cout<<"NICE!"<<std::endl;
 
         /* rs2 hight level api end*/
         while (true)

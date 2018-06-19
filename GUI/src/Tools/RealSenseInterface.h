@@ -55,7 +55,7 @@ class RealSenseInterface : public CameraInterface
                             std::chrono::system_clock::now().time_since_epoch()).count();
                     std::cout << "lastRgbTime = " << lastRgbTime << std::endl;
                     int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
-
+                    std::cout << "width = " << frame.get_width() << "height = " << frame.get_height() << std::endl;
                     memcpy(rgbBuffers[bufferIndex].first,frame.get_data(),
                             frame.get_width() * frame.get_height() * 3);
 
@@ -91,6 +91,7 @@ class RealSenseInterface : public CameraInterface
                             std::chrono::system_clock::now().time_since_epoch()).count();
                     std::cout << "lastDepthTime = " << lastDepthTime << std::endl;
                     int bufferIndex = (latestDepthIndex.getValue() + 1) % numBuffers;
+                    std::cout << "width = " << frame.get_width() << "height = " << frame.get_height() << std::endl;
 
                     // The multiplication by 2 is here because the depth is actually uint16_t
                     memcpy(frameBuffers[bufferIndex].first.first,frame.get_data(),

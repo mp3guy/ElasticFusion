@@ -45,17 +45,20 @@ GlobalModel::GlobalModel()
     float * vertices = new float[bufferSize];
 
     memset(&vertices[0], 0, bufferSize);
-
     glGenTransformFeedbacks(1, &vbos[0].second);
     glGenBuffers(1, &vbos[0].first);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[0].first);
-    glBufferData(GL_ARRAY_BUFFER, bufferSize, &vertices[0], GL_STREAM_DRAW);
+    std::cout << "bufferSize = " << bufferSize << std::endl;
+    //glBufferData(GL_ARRAY_BUFFER, bufferSize, &vertices[0], GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, bufferSize, vertices, GL_STREAM_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    std::cout << "bufferSize = " << bufferSize << std::endl;
 
     glGenTransformFeedbacks(1, &vbos[1].second);
     glGenBuffers(1, &vbos[1].first);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[1].first);
-    glBufferData(GL_ARRAY_BUFFER, bufferSize, &vertices[0], GL_STREAM_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, bufferSize, &vertices[0], GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, bufferSize, vertices, GL_STREAM_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     delete [] vertices;

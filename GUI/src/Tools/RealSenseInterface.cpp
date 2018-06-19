@@ -14,6 +14,10 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
     auto list = ctx.query_devices();
     if (list.size() == 0) 
         throw std::runtime_error("No device detected. Is it plugged in?");
+
+
+    std::cout<< "width:"<<inWidth <<" Height:"<< inHeight << ", fps:"<<inFps << std::endl;
+
     rs2::device tmp_dev = list.front();
     dev = &tmp_dev;
     std::cout << "start" << std::endl;
@@ -50,9 +54,17 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
             rgbBuffers,
             frameBuffers);
 	rs2::frame_queue queue(numBuffers);
-	std::thread t([&]() {
+	std::thread t([&, inWidth, inHeight, inFps]() {
+        /* rs2 hight level api start*/
         rs2::pipeline pipe;
-        pipe.start();
+        rs2::config cfg;
+        std::cout<< "width:"<<inWidth <<" Height:"<< inHeight << ", fps:"<<inFps << std::endl;
+        cfg.enable_stream(RS2_STREAM_COLOR, inWidth, inHeight, RS2_FORMAT_RGB8,inFps);
+        cfg.enable_stream(RS2_STREAM_DEPTH, inWidth, inHeight, RS2_FORMAT_Z16, inFps);
+        pipe.start(cfg);
+        std::cout<<"NICE!"<<std::endl;
+
+        /* rs2 hight level api end*/
         while (true)
         {
             auto frames = pipe.wait_for_frames();

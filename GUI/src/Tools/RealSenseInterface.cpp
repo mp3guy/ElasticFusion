@@ -16,8 +16,6 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
         throw std::runtime_error("No device detected. Is it plugged in?");
 
 
-    std::cout<< "width:"<<inWidth <<" Height:"<< inHeight << ", fps:"<<inFps << std::endl;
-
     rs2::device tmp_dev = list.front();
     dev = &tmp_dev;
     std::cout << "start" << std::endl;
@@ -44,15 +42,6 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
     //setAutoExposure(true);
     //setAutoWhiteBalance(true);
 
-    rgbCallback = new RGBCallback(lastRgbTime,
-            latestRgbIndex,
-            rgbBuffers);
-
-    depthCallback = new DepthCallback(lastDepthTime,
-            latestDepthIndex,
-            latestRgbIndex,
-            rgbBuffers,
-            frameBuffers);
 	rs2::frame_queue queue(numBuffers);
 	std::thread t([&, inWidth, inHeight, inFps]() {
         /* rs2 hight level api start*/
@@ -68,17 +57,53 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
         while (true)
         {
             auto frames = pipe.wait_for_frames();
-            rs2::depth_frame current_depth_frame = frames.get_depth_frame();
-            rs2::video_frame current_color_frame = frames.get_color_frame();
-            rgbCallback->proccessor(current_color_frame);
-            depthCallback->proccessor(current_depth_frame);
+
+            lastDepthTime = lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()).count();
+
+            std::cout << "lastRgbTime = " << lastRgbTime << std::endl;
+            std::cout << "lastDepthTime = " << lastDepthTime << std::endl;
+
+
+            rs2::depth_frame depth_frame = frames.get_depth_frame();
+            rs2::video_frame color_frame = frames.get_color_frame();
+
+
+            int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
+            //RGB
+
+            memcpy(rgbBuffers[bufferIndex].first,color_frame.get_data(),
+                    color_frame.get_width() * color_frame.get_height() * 3);
+
+            rgbBuffers[bufferIndex].second = lastRgbTime;
+            latestRgbIndex++;
+
+
+            //Depth
+            
+            // The multiplication by 2 is here because the depth is actually uint16_t
+            memcpy(frameBuffers[bufferIndex].first.first,depth_frame.get_data(),
+                    depth_frame.get_width() * depth_frame.get_height() * 2);
+
+            frameBuffers[bufferIndex].second = lastDepthTime;
+
+            int lastImageVal = latestRgbIndex.getValue();
+
+            if(lastImageVal == -1)
+            {
+                return;
+            }
+
+            lastImageVal %= numBuffers;
+
+            memcpy(frameBuffers[bufferIndex].first.second,rgbBuffers[lastImageVal].first,
+                    depth_frame.get_width() * depth_frame.get_height() * 3);
+
+            latestDepthIndex++;
+
         }
     });
     t.detach();
-//    dev->set_frame_callback(rs2::stream::depth,*depthCallback);
-//    dev->set_frame_callback(rs2::stream::color,*rgbCallback);
-
-//    dev->start();
 }
 
 RealSenseInterface::~RealSenseInterface()
@@ -98,8 +123,8 @@ RealSenseInterface::~RealSenseInterface()
             free(frameBuffers[i].first.second);
         }
 
-        delete rgbCallback;
-        delete depthCallback;
+        //delete rgbCallback;
+        //delete depthCallback;
     }
 }
 

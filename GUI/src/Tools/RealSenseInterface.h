@@ -6,6 +6,7 @@
 #include <map>
 #include <cstring>
 #include <cstdio>
+#include <atomic>
 #ifdef WITH_REALSENSE
 #include "librealsense2/rs.hpp"
 #endif
@@ -40,6 +41,8 @@ class RealSenseInterface : public CameraInterface
 #ifdef WITH_REALSENSE
         rs2::device *dev;
         rs2::context ctx;
+        rs2::pipeline pipe;
+        std::atomic<bool> pipe_active;
 
 #endif
 

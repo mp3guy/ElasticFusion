@@ -37,7 +37,7 @@ endif()
 
 #add a hint so that it can find it without the pkg-config
 find_library(LIBREALSENSE2_LIBRARY
-             NAMES librealsense2
+             NAMES librealsense2.so
              HINTS
              ${PC_LIBREALSENSE2_LIBDIR}
              ${PC_LIBREALSENSE2_LIBRARY_DIRS}
@@ -46,7 +46,6 @@ find_library(LIBREALSENSE2_LIBRARY
                /usr/lib
                /usr/lib/x86_64-linux-gnu
                /user/lib
-               PATH_SUFFIXES ${LIBREALSENSE2_PATH_SUFFIXES}
 )
 
 set(LIBREALSENSE2_INCLUDE_DIRS ${LIBREALSENSE2_INCLUDE_DIR})

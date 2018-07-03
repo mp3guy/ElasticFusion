@@ -26,8 +26,15 @@ find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
 find_package(efusion REQUIRED)
 find_package(SuiteSparse REQUIRED)
-find_package(RealSense2 REQUIRED)
-#option(WITH_REALSENSE2 "Build with Intel RealSense support?" ${REALSENSE2_FOUND})
+find_package(RealSense2 QUIET)
+
+message(STATUS "librealsense found: ${REALSENSE_FOUND}")
+
+if(WITH_REALSENSE)
+    include_directories(${REALSENSE2_INCLUDE_DIR})
+    option(WITH_REALSENSE "Build with Intel RealSense2 support?" ${REALSENSE2_FOUND})
+    add_definitions(-DWITH_REALSENSE)
+endif()
 
 if(WIN32)
   include_directories(${JPEG_INCLUDE_DIR})
@@ -39,11 +46,7 @@ include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EFUSION_INCLUDE_DIR})
 include_directories(${OPENNI2_INCLUDE_DIR})
-include_directories(${REALSENSE2_INCLUDE_DIR})
 
-#include_directories("/usr/include/librealsense2")
-add_definitions(-DWITH_REALSENSE)
-#set(EXTRA_LIBS ${EXTRA_LIBS} "realsense2")
 
 file(GLOB srcs *.cpp)
 file(GLOB tools_srcs Tools/*.cpp)
@@ -83,7 +86,7 @@ target_link_libraries(ElasticFusion
                       ${SUITESPARSE_LIBRARIES}
                       ${BLAS_LIBRARIES}
                       ${LAPACK_LIBRARIES}
-                      ${LIBREALSENSE2_LIBRARY}
+                      ${REALSENSE2_LIBRARY}
 )
 
 

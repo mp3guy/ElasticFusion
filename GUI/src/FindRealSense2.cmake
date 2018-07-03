@@ -8,18 +8,18 @@
 
 find_package(PkgConfig)
 if(${CMAKE_VERSION} VERSION_LESS 2.8.2)
-    pkg_check_modules(PC_LIBREALSENSE2 librealsense2-dev)
+    pkg_check_modules(PC_REALSENSE2 librealsense2-dev)
 else()
-    pkg_check_modules(PC_LIBREALSENSE2 QUIET librealsense2-dev)
+    pkg_check_modules(PC_REALSENSE2 QUIET librealsense2-dev)
 endif()
 
-set(LIBREALSENSE2_DEFINITIONS ${PC_LIBREALSENSE2_CFLAGS_OTHER})
+set(REALSENSE2_DEFINITIONS ${PC_REALSENSE2_CFLAGS_OTHER})
 
 #add a hint so that it can find it without the pkg-config
-find_path(LIBREALSENSE2_INCLUDE_DIR rs.hpp
+find_path(REALSENSE2_INCLUDE_DIR rs.hpp
           HINTS
-          ${PC_LIBREALSENSE2_INCLUDEDIR}
-          ${PC_LIBREALSENSE2_INCLUDE_DIRS}
+          ${PC_REALSENSE2_INCLUDEDIR}
+          ${PC_REALSENSE2_INCLUDE_DIRS}
           PATHS
             "${PROGRAM_FILES}/librealsense2/Include"
             /usr/include
@@ -30,17 +30,17 @@ find_path(LIBREALSENSE2_INCLUDE_DIR rs.hpp
 )
 
 if(${CMAKE_CL_64})
-    set(LIBREALSENSE2_PATH_SUFFIXES lib64)
+    set(REALSENSE2_PATH_SUFFIXES lib64)
 else()
-    set(LIBREALSENSE2_PATH_SUFFIXES lib)
+    set(REALSENSE2_PATH_SUFFIXES lib)
 endif()
 
 #add a hint so that it can find it without the pkg-config
-find_library(LIBREALSENSE2_LIBRARY
+find_library(REALSENSE2_LIBRARY
              NAMES librealsense2.so
              HINTS
-             ${PC_LIBREALSENSE2_LIBDIR}
-             ${PC_LIBREALSENSE2_LIBRARY_DIRS}
+             ${PC_REALSENSE2_LIBDIR}
+             ${PC_REALSENSE2_LIBRARY_DIRS}
              PATHS
                "${PROGRAM_FILES}/librealsense2"
                /usr/lib
@@ -48,11 +48,11 @@ find_library(LIBREALSENSE2_LIBRARY
                /user/lib
 )
 
-set(LIBREALSENSE2_INCLUDE_DIRS ${LIBREALSENSE2_INCLUDE_DIR})
-set(LIBREALSENSE2_LIBRARIES ${LIBREALSENSE2_LIBRARY})
+set(REALSENSE2_INCLUDE_DIRS ${REALSENSE2_INCLUDE_DIR})
+set(REALSENSE2_LIBRARIES ${REALSENSE2_LIBRARY})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(librealsense2 DEFAULT_MSG
-    LIBREALSENSE2_LIBRARY LIBREALSENSE2_INCLUDE_DIR)
+    REALSENSE2_LIBRARY REALSENSE2_INCLUDE_DIR)
 
-mark_as_advanced(LIBREALSENSE2_LIBRARY LIBREALSENSE2_INCLUDE_DIR)
+mark_as_advanced(REALSENSE2_LIBRARY REALSENSE2_INCLUDE_DIR)

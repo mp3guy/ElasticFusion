@@ -29,11 +29,12 @@ find_package(SuiteSparse REQUIRED)
 find_package(RealSense2 QUIET)
 
 message(STATUS "librealsense found: ${REALSENSE_FOUND}")
+option(WITH_REALSENSE "Build with Intel RealSense2 support?" ${REALSENSE2_FOUND})
 
 if(WITH_REALSENSE)
     include_directories(${REALSENSE2_INCLUDE_DIR})
-    option(WITH_REALSENSE "Build with Intel RealSense2 support?" ${REALSENSE2_FOUND})
     add_definitions(-DWITH_REALSENSE)
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${REALSENSE2_LIBRARY})
 endif()
 
 if(WIN32)
@@ -86,7 +87,6 @@ target_link_libraries(ElasticFusion
                       ${SUITESPARSE_LIBRARIES}
                       ${BLAS_LIBRARIES}
                       ${LAPACK_LIBRARIES}
-                      ${REALSENSE2_LIBRARY}
 )
 
 
@@ -95,3 +95,4 @@ INSTALL(TARGETS ElasticFusion
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
 )
+

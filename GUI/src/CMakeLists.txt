@@ -83,7 +83,7 @@ target_link_libraries(ElasticFusion
                       ${SUITESPARSE_LIBRARIES}
                       ${BLAS_LIBRARIES}
                       ${LAPACK_LIBRARIES}
-                      ${REALSENSE2_LIBRARY}
+                      ${LIBREALSENSE2_LIBRARY}
 )
 
 

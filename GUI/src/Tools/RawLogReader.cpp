@@ -154,7 +154,7 @@ int RawLogReader::getNumFrames()
 
 bool RawLogReader::hasMore()
 {
-    return currentFrame + 1 < numFrames;
+    return currentFrame < numFrames;
 }
 
 

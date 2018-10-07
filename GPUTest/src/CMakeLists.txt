@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.6.0)
-
+set(CMAKE_C_COMPILER /usr/bin/gcc-5)
+set(CMAKE_CXX_COMPILER /usr/bin/g++-5)
 project(GPUTest)
 
 find_package(Pangolin 0.1 REQUIRED)

@@ -45,6 +45,7 @@ GlobalModel::GlobalModel()
     float * vertices = new float[bufferSize];
 
     memset(&vertices[0], 0, bufferSize);
+
     glGenTransformFeedbacks(1, &vbos[0].second);
     glGenBuffers(1, &vbos[0].first);
     glBindBuffer(GL_ARRAY_BUFFER, vbos[0].first);

@@ -53,22 +53,26 @@ RealSenseInterface::RealSenseInterface(int inWidth,int inHeight,int inFps)
     setAutoWhiteBalance(true);
 
 	rs2::frame_queue queue(numBuffers);
-	std::thread t([&,cfg, inWidth, inHeight, inFps]() {
-
+    std::thread t([&,cfg, inWidth, inHeight, inFps]() {
         pipe.start(cfg);
+        rs2::align align(RS2_STREAM_COLOR); //force depth stream align to  color stream
         pipe_active = true;
 
         while (pipe_active)
         {
-            auto frames = pipe.wait_for_frames();
+            auto frameset = pipe.wait_for_frames();
+            auto processed = align.process(frameset);
+
+            rs2::video_frame color_frame = processed.first(RS2_STREAM_COLOR);
+            rs2::depth_frame depth_frame = processed.get_depth_frame();
+
+            if (!depth_frame)
+            {
+                continue;
+            }
 
             lastDepthTime = lastRgbTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count();
-
-            rs2::depth_frame depth_frame = frames.get_depth_frame();
-            rs2::video_frame color_frame = frames.get_color_frame();
-
-
             int bufferIndex = (latestRgbIndex.getValue() + 1) % numBuffers;
             //RGB
 
@@ -132,7 +136,7 @@ void RealSenseInterface::setAutoExposure(bool value)
     try {
         sensor.set_option(rs2_option::RS2_OPTION_ENABLE_AUTO_EXPOSURE, value);
     } catch (rs2::invalid_value_error &e) {
-        std::cerr << "This camera not surport Auto White Balance option." << std::endl;
+        std::cerr << "This camera dose not support Auto White Balance option." << std::endl;
     }
 }
 
@@ -142,7 +146,7 @@ void RealSenseInterface::setAutoWhiteBalance(bool value)
     try {
         return sensor.set_option(rs2_option::RS2_OPTION_ENABLE_AUTO_EXPOSURE, value);
     } catch (rs2::invalid_value_error &e) {
-        std::cerr << "This camera not surport Auto White Balance option." << std::endl;
+        std::cerr << "This camera does not support Auto White Balance option." << std::endl;
     }
 }
 
@@ -152,7 +156,7 @@ bool RealSenseInterface::getAutoExposure()
         auto sensor = dev->first<rs2::sensor>();
         return sensor.get_option(rs2_option::RS2_OPTION_ENABLE_AUTO_EXPOSURE);
     } catch (rs2::invalid_value_error &e) {
-        std::cerr << "This camera not surport Auto White Balance option." << std::endl;
+        std::cerr << "This camera dose not support Auto White Balance option." << std::endl;
         return false;
     }
 }
@@ -163,7 +167,7 @@ bool RealSenseInterface::getAutoWhiteBalance()
         auto sensor = dev->first<rs2::sensor>();
         return sensor.get_option(rs2_option::RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE);
     } catch (rs2::invalid_value_error &e) {
-        std::cerr << "This camera not surport Auto White Balance option." << std::endl;
+        std::cerr << "This camera does not support Auto White Balance option." << std::endl;
         return false;
     }
 }

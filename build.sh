@@ -31,7 +31,7 @@ elif [[ $version == *"18.04"* ]] ; then
     sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
     sudo add-apt-repository ppa:openjdk-r/ppa
     sudo apt-get update
-    sudo apt-get install cuda
+    sudo apt-get install cuda-10-0
 else
     echo "Don't use this on anything except 14.04, 15.04, 16.04 or 18.04"
     exit

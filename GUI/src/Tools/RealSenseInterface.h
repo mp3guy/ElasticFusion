@@ -43,7 +43,6 @@ class RealSenseInterface : public CameraInterface
         rs2::context ctx;
         rs2::pipeline pipe;
         std::atomic<bool> pipe_active;
-
 #endif
 
         bool initSuccessful;

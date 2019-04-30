@@ -248,10 +248,10 @@ Eigen::Matrix4f Ferns::findFrame(std::vector<SurfaceConstraint> & constraints,
 //        colorCurrent.texture->Upload(imgSmall.data, GL_RGB, GL_UNSIGNED_BYTE);
 
         //WARNING initICP* must be called before initRGB*
-        rgbd.initICPModel(&vertFern, &normFern, (float)maxDepth / 1000.0f, fernPose);
+        rgbd.initICPModel(&vertFern, &normFern, fernPose);
 //        rgbd.initRGBModel(&colorFern);
 
-        rgbd.initICP(&vertCurrent, &normCurrent, (float)maxDepth / 1000.0f);
+        rgbd.initICP(&vertCurrent, &normCurrent);
 //        rgbd.initRGB(&colorCurrent);
 
         Eigen::Vector3f trans = fernPose.topRightCorner(3, 1);

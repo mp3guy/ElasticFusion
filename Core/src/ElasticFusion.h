@@ -299,7 +299,7 @@ class ElasticFusion
         std::vector<PoseMatch> poseMatches;
         std::vector<Deformation::Constraint> relativeCons;
 
-        std::vector<std::pair<unsigned long long int, Eigen::Matrix4f> > poseGraph;
+        std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>> poseGraph;
         std::vector<unsigned long long int> poseLogTimes;
 
         Img<Eigen::Matrix<unsigned char, 3, 1>> imageBuff;

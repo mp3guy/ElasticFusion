@@ -90,7 +90,7 @@ bool Deformation::constrain(std::vector<Ferns::Frame*> & ferns,
                             std::vector<float> & rawGraph,
                             int time,
                             const bool fernMatch,
-                            std::vector<std::pair<unsigned long long int, Eigen::Matrix4f> > & poseGraph,
+                            std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>> & poseGraph,
                             const bool relaxGraph,
                             std::vector<Constraint> * newRelativeCons)
 {

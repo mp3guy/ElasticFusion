@@ -184,7 +184,7 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
             foundIndex = imax;
         }
 
-        std::vector<std::pair<float, int> > nearNodes;
+        std::vector<std::pair<float, int>> nearNodes;
 
         if(foundIndex == graphCloud->size())
         {
@@ -339,7 +339,7 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * v
             foundIndex = imax;
         }
 
-        std::vector<std::pair<float, int> > nearNodes;
+        std::vector<std::pair<float, int>> nearNodes;
 
         if(foundIndex == graphCloud->size())
         {

@@ -117,14 +117,11 @@ RGBDOdometry::~RGBDOdometry()
 
 void RGBDOdometry::initICP(GPUTexture * filteredDepth, const float depthCutoff)
 {
-    cudaArray * textPtr;
+    cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &filteredDepth->cudaRes);
-
     cudaGraphicsSubResourceGetMappedArray(&textPtr, filteredDepth->cudaRes, 0, 0);
-
     cudaMemcpy2DFromArray(depth_tmp[0].ptr(0), depth_tmp[0].step(), textPtr, 0, 0, depth_tmp[0].colsBytes(), depth_tmp[0].rows(), cudaMemcpyDeviceToDevice);
-
     cudaGraphicsUnmapResources(1, &filteredDepth->cudaRes);
 
     for(int i = 1; i < NUM_PYRS; ++i)
@@ -141,9 +138,9 @@ void RGBDOdometry::initICP(GPUTexture * filteredDepth, const float depthCutoff)
     cudaDeviceSynchronize();
 }
 
-void RGBDOdometry::initICP(GPUTexture * predictedVertices, GPUTexture * predictedNormals, const float depthCutoff)
+void RGBDOdometry::initICP(GPUTexture * predictedVertices, GPUTexture * predictedNormals)
 {
-    cudaArray * textPtr;
+    cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
     cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
@@ -168,10 +165,9 @@ void RGBDOdometry::initICP(GPUTexture * predictedVertices, GPUTexture * predicte
 
 void RGBDOdometry::initICPModel(GPUTexture * predictedVertices,
                                 GPUTexture * predictedNormals,
-                                const float depthCutoff,
                                 const Eigen::Matrix4f & modelPose)
 {
-    cudaArray * textPtr;
+    cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
     cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
@@ -216,7 +212,7 @@ void RGBDOdometry::populateRGBDData(GPUTexture * rgb,
         pyrDownGaussF(destDepths[i], destDepths[i + 1]);
     }
 
-    cudaArray * textPtr;
+    cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &rgb->cudaRes);
 
@@ -248,7 +244,7 @@ void RGBDOdometry::initRGB(GPUTexture * rgb)
 
 void RGBDOdometry::initFirstRGB(GPUTexture * rgb)
 {
-    cudaArray * textPtr;
+    cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &rgb->cudaRes);
 

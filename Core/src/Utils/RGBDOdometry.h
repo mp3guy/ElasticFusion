@@ -41,9 +41,9 @@ class RGBDOdometry
 
         void initICP(GPUTexture * filteredDepth, const float depthCutoff);
 
-        void initICP(GPUTexture * predictedVertices, GPUTexture * predictedNormals, const float depthCutoff);
+        void initICP(GPUTexture * predictedVertices, GPUTexture * predictedNormals);
 
-        void initICPModel(GPUTexture * predictedVertices, GPUTexture * predictedNormals, const float depthCutoff, const Eigen::Matrix4f & modelPose);
+        void initICPModel(GPUTexture * predictedVertices, GPUTexture * predictedNormals, const Eigen::Matrix4f & modelPose);
 
         void initRGB(GPUTexture * rgb);
 
@@ -76,16 +76,16 @@ class RGBDOdometry
                               DeviceArray2D<float> * destDepths,
                               DeviceArray2D<unsigned char> * destImages);
 
-        std::vector<DeviceArray2D<unsigned short> > depth_tmp;
+        std::vector<DeviceArray2D<unsigned short>> depth_tmp;
 
         DeviceArray<float> vmaps_tmp;
         DeviceArray<float> nmaps_tmp;
 
-        std::vector<DeviceArray2D<float> > vmaps_g_prev_;
-        std::vector<DeviceArray2D<float> > nmaps_g_prev_;
+        std::vector<DeviceArray2D<float>> vmaps_g_prev_;
+        std::vector<DeviceArray2D<float>> nmaps_g_prev_;
 
-        std::vector<DeviceArray2D<float> > vmaps_curr_;
-        std::vector<DeviceArray2D<float> > nmaps_curr_;
+        std::vector<DeviceArray2D<float>> vmaps_curr_;
+        std::vector<DeviceArray2D<float>> nmaps_curr_;
 
         CameraModel intr;
 

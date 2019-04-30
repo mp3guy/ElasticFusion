@@ -298,7 +298,7 @@ void ElasticFusion::processFrame(const unsigned char * rgb,
             //WARNING initICP* must be called before initRGB*
             frameToModel.initICPModel(shouldFillIn ? &fillIn.vertexTexture : indexMap.vertexTex(),
                                       shouldFillIn ? &fillIn.normalTexture : indexMap.normalTex(),
-                                      maxDepthProcessed, currPose);
+                                      currPose);
             frameToModel.initRGBModel((shouldFillIn || frameToFrameRGB) ? &fillIn.imageTexture : indexMap.imageTex());
 
             frameToModel.initICP(textures[GPUTexture::DEPTH_FILTERED], maxDepthProcessed);
@@ -481,10 +481,10 @@ void ElasticFusion::processFrame(const unsigned char * rgb,
             TOCK("IndexMap::INACTIVE");
 
             //WARNING initICP* must be called before initRGB*
-            modelToModel.initICPModel(indexMap.oldVertexTex(), indexMap.oldNormalTex(), maxDepthProcessed, currPose);
+            modelToModel.initICPModel(indexMap.oldVertexTex(), indexMap.oldNormalTex(), currPose);
             modelToModel.initRGBModel(indexMap.oldImageTex());
 
-            modelToModel.initICP(indexMap.vertexTex(), indexMap.normalTex(), maxDepthProcessed);
+            modelToModel.initICP(indexMap.vertexTex(), indexMap.normalTex());
             modelToModel.initRGB(indexMap.imageTex());
 
             Eigen::Vector3f trans = currPose.topRightCorner(3, 1);

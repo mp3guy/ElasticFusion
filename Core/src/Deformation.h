@@ -85,7 +85,7 @@ class Deformation
                        std::vector<float> & rawGraph,
                        int time,
                        const bool fernMatch,
-                       std::vector<std::pair<unsigned long long int, Eigen::Matrix4f> > & poseGraph,
+                       std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>> & poseGraph,
                        const bool relaxGraph,
                        std::vector<Constraint> * newRelativeCons = 0);
 
@@ -120,7 +120,7 @@ class Deformation
         unsigned int count;
         Eigen::Vector4f * vertices;
 
-        std::vector<std::pair<uint64_t, Eigen::Vector3f> > poseGraphPoints;
+        std::vector<std::pair<uint64_t, Eigen::Vector3f>> poseGraphPoints;
         std::vector<unsigned long long int> graphPoseTimes;
         std::vector<Eigen::Vector3f> * graphPosePoints;
 

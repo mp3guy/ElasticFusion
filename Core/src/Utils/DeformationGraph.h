@@ -126,11 +126,11 @@ class DeformationGraph
         std::vector<GraphNode *> graph;
 
         //Maps vertex indices to neighbours and weights
-        std::vector<std::vector<VertexWeightMap> > vertexMap;
+        std::vector<std::vector<VertexWeightMap>> vertexMap;
         std::vector<Eigen::Vector3f> * sourceVertices;
 
         //Maps pose indices to neighbours and weights
-        std::vector<std::vector<VertexWeightMap> > poseMap;
+        std::vector<std::vector<VertexWeightMap>> poseMap;
 
         //Stores a vertex constraint
         class Constraint

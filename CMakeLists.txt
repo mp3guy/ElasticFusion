@@ -32,8 +32,8 @@ if(WITH_REALSENSE)
   set(EXTRA_LIBS ${EXTRA_LIBS} ${REALSENSE_LIBRARY})
 endif()
 
-file(GLOB srcs *.cpp)
-file(GLOB tools_srcs Tools/*.cpp)
+file(GLOB srcs *.cpp *.h *.cu *.cuh)
+file(GLOB tools_srcs Tools/*.cpp Tools/*.h Tools/*.cu Tools/*.cuh)
 
 add_definitions(-Dlinux=1)
 
@@ -45,8 +45,6 @@ add_subdirectory(Core)
 add_executable(ElasticFusion 
                ${srcs}
                ${tools_srcs}
-               ${hdrs}
-               ${tools_hdrs}
 )
 
 target_link_libraries(ElasticFusion

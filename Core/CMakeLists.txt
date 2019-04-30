@@ -7,11 +7,11 @@ include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
 include_directories(${SUITESPARSE_INCLUDE_DIRS})
 
-file(GLOB srcs *.cpp)
-file(GLOB utils_srcs Utils/*.cpp)
-file(GLOB shader_srcs Shaders/*.cpp)
-file(GLOB cuda Cuda/*.cu)
-file(GLOB containers Cuda/containers/*.cpp)
+file(GLOB srcs *.cpp *.h *.cu *.cuh)
+file(GLOB utils_srcs Utils/*.cpp Utils/*.h Utils/*.cu Utils/*.cuh)
+file(GLOB shader_srcs Shaders/*.cpp Shaders/*.h Shaders/*.cu Shaders/*.cuh)
+file(GLOB cuda Cuda/*.cpp Cuda/*.h Cuda/*.cu Cuda/*.cuh)
+file(GLOB containers Cuda/containers/*.cpp Cuda/containers/*.h Cuda/containers/*.cu Cuda/containers/*.cuh)
 
 set(CUDA_ARCH_BIN "" CACHE STRING "Specify 'real' GPU arch to build binaries for, BIN(PTX) format is supported. Example: 1.3 2.1(1.3) or 13 21(13)")
 set(CUDA_ARCH_PTX "" CACHE STRING "Specify 'virtual' PTX arch to build PTX intermediate code for. Example: 1.0 1.2 or 10 12")              
@@ -36,11 +36,6 @@ add_library(efusion SHARED
             ${cuda} 
             ${cuda_objs} 
             ${containers}
-            ${hdrs}
-            ${utils_hdrs}
-            ${shader_hdrs}
-            ${cuda_hdrs} 
-            ${containers_hdrs}
 )
 
 target_link_libraries(efusion

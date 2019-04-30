@@ -2,16 +2,17 @@
  * This file is part of ElasticFusion.
  *
  * Copyright (C) 2015 Imperial College London
- * 
- * The use of the code within this file and all code within files that 
- * make up the software that is ElasticFusion is permitted for 
- * non-commercial purposes only.  The full terms and conditions that 
- * apply to the code within this file are detailed within the LICENSE.txt 
- * file and at <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/> 
- * unless explicitly stated.  By downloading this file you agree to 
+ *
+ * The use of the code within this file and all code within files that
+ * make up the software that is ElasticFusion is permitted for
+ * non-commercial purposes only.  The full terms and conditions that
+ * apply to the code within this file are detailed within the LICENSE.txt
+ * file and at
+ * <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/>
+ * unless explicitly stated.  By downloading this file you agree to
  * comply with these terms.
  *
- * If you wish to use any of this code for commercial purposes then 
+ * If you wish to use any of this code for commercial purposes then
  * please email researchcontracts.engineering@imperial.ac.uk.
  *
  */
@@ -19,126 +20,111 @@
 #ifndef THREADMUTEXOBJECT_H_
 #define THREADMUTEXOBJECT_H_
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 template <class T>
-class ThreadMutexObject
-{
-    public:
-        ThreadMutexObject()
-        {}
+class ThreadMutexObject {
+ public:
+  ThreadMutexObject() {}
 
-        ThreadMutexObject(T initialValue)
-         : object(initialValue),
-           lastCopy(initialValue)
-        {}
+  ThreadMutexObject(T initialValue) : object(initialValue), lastCopy(initialValue) {}
 
-        void assign(T newValue)
-        {
-            mutex.lock();
+  void assign(T newValue) {
+    mutex.lock();
 
-            object = lastCopy = newValue;
+    object = lastCopy = newValue;
 
-            mutex.unlock();
-        }
+    mutex.unlock();
+  }
 
-        std::mutex & getMutex()
-        {
-            return mutex;
-        }
+  std::mutex& getMutex() {
+    return mutex;
+  }
 
-        T & getReference()
-        {
-            return object;
-        }
+  T& getReference() {
+    return object;
+  }
 
-        void assignAndNotifyAll(T newValue)
-        {
-            mutex.lock();
+  void assignAndNotifyAll(T newValue) {
+    mutex.lock();
 
-            object = newValue;
+    object = newValue;
 
-            signal.notify_all();
+    signal.notify_all();
 
-            mutex.unlock();
-        }
-        
-        void notifyAll()
-        {
-            mutex.lock();
+    mutex.unlock();
+  }
 
-            signal.notify_all();
+  void notifyAll() {
+    mutex.lock();
 
-            mutex.unlock();
-        }
+    signal.notify_all();
 
-        T getValue()
-        {
-            mutex.lock();
+    mutex.unlock();
+  }
 
-            lastCopy = object;
+  T getValue() {
+    mutex.lock();
 
-            mutex.unlock();
+    lastCopy = object;
 
-            return lastCopy;
-        }
+    mutex.unlock();
 
-        T waitForSignal()
-        {
-            mutex.lock();
+    return lastCopy;
+  }
 
-            signal.wait(mutex);
+  T waitForSignal() {
+    mutex.lock();
 
-            lastCopy = object;
+    signal.wait(mutex);
 
-            mutex.unlock();
+    lastCopy = object;
 
-            return lastCopy;
-        }
+    mutex.unlock();
 
-        T getValueWait(int wait = 33000)
-        {
-            std::this_thread::sleep_for(std::chrono::microseconds(wait));
+    return lastCopy;
+  }
 
-            mutex.lock();
+  T getValueWait(int wait = 33000) {
+    std::this_thread::sleep_for(std::chrono::microseconds(wait));
 
-            lastCopy = object;
+    mutex.lock();
 
-            mutex.unlock();
+    lastCopy = object;
 
-            return lastCopy;
-        }
+    mutex.unlock();
 
-        T & getReferenceWait(int wait = 33000)
-        {
-            std::this_thread::sleep_for(std::chrono::microseconds(wait));
+    return lastCopy;
+  }
 
-            mutex.lock();
+  T& getReferenceWait(int wait = 33000) {
+    std::this_thread::sleep_for(std::chrono::microseconds(wait));
 
-            lastCopy = object;
+    mutex.lock();
 
-            mutex.unlock();
+    lastCopy = object;
 
-            return lastCopy;
-        }
+    mutex.unlock();
 
-        void operator++(int)
-        {
-            mutex.lock();
+    return lastCopy;
+  }
 
-            object++;
+  void operator++(int) {
+    mutex.lock();
 
-            mutex.unlock();
-        }
+    object++;
 
-    private:
-        T object;
-        T lastCopy;
-        std::mutex mutex;
-        std::condition_variable_any signal;
+    mutex.unlock();
+  }
+
+ private:
+  T object;
+  T lastCopy;
+  std::mutex mutex;
+  std::condition_variable_any signal;
 };
 
 #endif /* THREADMUTEXOBJECT_H_ */

@@ -7,7 +7,8 @@
  * make up the software that is ElasticFusion is permitted for
  * non-commercial purposes only.  The full terms and conditions that
  * apply to the code within this file are detailed within the LICENSE.txt
- * file and at <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/>
+ * file and at
+ * <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/>
  * unless explicitly stated.  By downloading this file you agree to
  * comply with these terms.
  *
@@ -19,48 +20,47 @@
 #ifndef RAWLOGREADER_H_
 #define RAWLOGREADER_H_
 
+#include <pangolin/utils/file_utils.h>
 #include "../Core/Utils/Resolution.h"
 #include "../Core/Utils/Stopwatch.h"
-#include <pangolin/utils/file_utils.h>
 
 #include "LogReader.h"
 
-#include <cassert>
-#include <zlib.h>
-#include <iostream>
 #include <stdio.h>
-#include <string>
+#include <zlib.h>
+#include <cassert>
+#include <iostream>
 #include <stack>
+#include <string>
 
-class RawLogReader : public LogReader
-{
-    public:
-        RawLogReader(std::string file, bool flipColors);
+class RawLogReader : public LogReader {
+ public:
+  RawLogReader(std::string file, bool flipColors);
 
-        virtual ~RawLogReader();
+  virtual ~RawLogReader();
 
-        void getNext();
+  void getNext();
 
-        void getBack();
+  void getBack();
 
-        int getNumFrames();
+  int getNumFrames();
 
-        bool hasMore();
+  bool hasMore();
 
-        bool rewound();
+  bool rewound();
 
-        void rewind();
+  void rewind();
 
-        void fastForward(int frame);
+  void fastForward(int frame);
 
-        const std::string getFile();
+  const std::string getFile();
 
-        void setAuto(bool value);
+  void setAuto(bool value);
 
-        std::stack<int> filePointers;
+  std::stack<int> filePointers;
 
-    private:
-        void getCore();
+ private:
+  void getCore();
 };
 
 #endif /* RAWLOGREADER_H_ */

@@ -2,16 +2,17 @@
  * This file is part of ElasticFusion.
  *
  * Copyright (C) 2015 Imperial College London
- * 
- * The use of the code within this file and all code within files that 
- * make up the software that is ElasticFusion is permitted for 
- * non-commercial purposes only.  The full terms and conditions that 
- * apply to the code within this file are detailed within the LICENSE.txt 
- * file and at <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/> 
- * unless explicitly stated.  By downloading this file you agree to 
+ *
+ * The use of the code within this file and all code within files that
+ * make up the software that is ElasticFusion is permitted for
+ * non-commercial purposes only.  The full terms and conditions that
+ * apply to the code within this file are detailed within the LICENSE.txt
+ * file and at
+ * <http://www.imperial.ac.uk/dyson-robotics-lab/downloads/elastic-fusion/elastic-fusion-license/>
+ * unless explicitly stated.  By downloading this file you agree to
  * comply with these terms.
  *
- * If you wish to use any of this code for commercial purposes then 
+ * If you wish to use any of this code for commercial purposes then
  * please email researchcontracts.engineering@imperial.ac.uk.
  *
  */
@@ -21,63 +22,45 @@
 
 #include "Tools/GUI.h"
 #include "Tools/GroundTruthOdometry.h"
-#include "Tools/RawLogReader.h"
 #include "Tools/LiveLogReader.h"
+#include "Tools/RawLogReader.h"
 
 #ifndef MAINCONTROLLER_H_
 #define MAINCONTROLLER_H_
 
-class MainController
-{
-    public:
-        MainController(int argc, char * argv[]);
-        virtual ~MainController();
+class MainController {
+ public:
+  MainController(int argc, char* argv[]);
+  virtual ~MainController();
 
-        void launch();
+  void launch();
 
-    private:
-        void run();
+ private:
+  void run();
 
-        void loadCalibration(const std::string & filename);
+  void loadCalibration(const std::string& filename);
 
-        bool good;
-        ElasticFusion * eFusion;
-        GUI * gui;
-        GroundTruthOdometry * groundTruthOdometry;
-        LogReader * logReader;
+  bool good;
+  ElasticFusion* eFusion;
+  GUI* gui;
+  GroundTruthOdometry* groundTruthOdometry;
+  LogReader* logReader;
 
-        bool iclnuim;
-        std::string logFile;
-        std::string poseFile;
+  bool iclnuim;
+  std::string logFile;
+  std::string poseFile;
 
-        float confidence,
-              depth,
-              icp,
-              icpErrThresh,
-              covThresh,
-              photoThresh,
-              fernThresh;
+  float confidence, depth, icp, icpErrThresh, covThresh, photoThresh, fernThresh;
 
-        int timeDelta,
-            icpCountThresh,
-            start,
-            end;
+  int timeDelta, icpCountThresh, start, end;
 
-        bool fillIn,
-             openLoop,
-             reloc,
-             frameskip,
-             quiet,
-             fastOdom,
-             so3,
-             rewind,
-             frameToFrameRGB;
+  bool fillIn, openLoop, reloc, frameskip, quiet, fastOdom, so3, rewind, frameToFrameRGB;
 
-        int framesToSkip;
-        bool streaming;
-        bool resetButton;
+  int framesToSkip;
+  bool streaming;
+  bool resetButton;
 
-        Resize * resizeStream;
+  Resize* resizeStream;
 };
 
 #endif /* MAINCONTROLLER_H_ */

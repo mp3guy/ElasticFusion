@@ -54,6 +54,9 @@
 #include "cudafuncs.cuh"
 #include "operators.cuh"
 
+constexpr int reduceThreads = 256;
+constexpr int reduceBlocks = 64;
+
 __inline__ __device__ JtJJtrSE3 warpReduceSum(JtJJtrSE3 val) {
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
     val.aa += __shfl_down_sync(0xFFFFFFFF, val.aa, offset);
@@ -375,9 +378,6 @@ void icpStep(
   icp.N = cols * rows;
   icp.out = sum;
 
-  constexpr int reduceThreads = 256;
-  constexpr int reduceBlocks = 80;
-
   icpKernel<<<reduceBlocks, reduceThreads>>>(icp);
 
   reduceSum<<<1, MAX_THREADS>>>(sum, out, reduceBlocks);
@@ -531,9 +531,6 @@ void rgbStep(
   rgb.sobelScale = sobelScale;
   rgb.N = rgb.cols * rgb.rows;
   rgb.out = sum;
-
-  constexpr int reduceThreads = 256;
-  constexpr int reduceBlocks = 80;
 
   rgbKernel<<<reduceBlocks, reduceThreads>>>(rgb);
 
@@ -774,9 +771,6 @@ void computeRgbResidual(
   rgb.N = cols * rows;
   rgb.out = sumResidual;
 
-  constexpr int reduceThreads = 256;
-  constexpr int reduceBlocks = 80;
-
   residualKernel<<<reduceBlocks, reduceThreads>>>(rgb);
 
   int2 out_host = {0, 0};
@@ -957,9 +951,6 @@ void so3Step(
   so3.N = cols * rows;
 
   so3.out = sum;
-
-  constexpr int reduceThreads = 256;
-  constexpr int reduceBlocks = 80;
 
   so3Kernel<<<reduceBlocks, reduceThreads>>>(so3);
 

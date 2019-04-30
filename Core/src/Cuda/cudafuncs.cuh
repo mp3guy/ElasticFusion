@@ -76,9 +76,7 @@ void icpStep(const mat33& Rcurr,
              DeviceArray<JtJJtrSE3> & out,
              float * matrixA_host,
              float * vectorB_host,
-             float * residual_host,
-             int threads,
-             int blocks);
+             float * residual_host);
 
 void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
              const float & sigma,
@@ -91,9 +89,7 @@ void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
              DeviceArray<JtJJtrSE3> & sum,
              DeviceArray<JtJJtrSE3> & out,
              float * matrixA_host,
-             float * vectorB_host,
-             int threads,
-             int blocks);
+             float * vectorB_host);
 
 void so3Step(const DeviceArray2D<unsigned char> & lastImage,
              const DeviceArray2D<unsigned char> & nextImage,
@@ -104,9 +100,7 @@ void so3Step(const DeviceArray2D<unsigned char> & lastImage,
              DeviceArray<JtJJtrSO3> & out,
              float * matrixA_host,
              float * vectorB_host,
-             float * residual_host,
-             int threads,
-             int blocks);
+             float * residual_host);
 
 void computeRgbResidual(const float & minScale,
                         const DeviceArray2D<short> & dIdx,
@@ -121,9 +115,7 @@ void computeRgbResidual(const float & minScale,
                         const float3 & kt,
                         const mat33 & krkinv,
                         int & sigmaSum,
-                        int & count,
-                        int threads,
-                        int blocks);
+                        int & count);
 
 void createVMap(const CameraModel& intr,
                 const DeviceArray2D<unsigned short> & depth,

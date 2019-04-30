@@ -396,9 +396,7 @@ void icpStep(const mat33& Rcurr,
              DeviceArray<JtJJtrSE3> & out,
              float * matrixA_host,
              float * vectorB_host,
-             float * residual_host,
-             int threads,
-             int blocks)
+             float * residual_host)
 {
     int cols = vmap_curr.cols ();
     int rows = vmap_curr.rows () / 3;
@@ -428,9 +426,12 @@ void icpStep(const mat33& Rcurr,
     icp.N = cols * rows;
     icp.out = sum;
 
-    icpKernel<<<blocks, threads>>>(icp);
+    constexpr int reduceThreads = 256;
+    constexpr int reduceBlocks = 80;
 
-    reduceSum<<<1, MAX_THREADS>>>(sum, out, blocks);
+    icpKernel<<<reduceBlocks, reduceThreads>>>(icp);
+
+    reduceSum<<<1, MAX_THREADS>>>(sum, out, reduceBlocks);
 
     cudaSafeCall(cudaGetLastError());
     cudaSafeCall(cudaDeviceSynchronize());
@@ -600,9 +601,7 @@ void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
              DeviceArray<JtJJtrSE3> & sum,
              DeviceArray<JtJJtrSE3> & out,
              float * matrixA_host,
-             float * vectorB_host,
-             int threads,
-             int blocks)
+             float * vectorB_host)
 {
     RGBReduction rgb;
 
@@ -619,9 +618,12 @@ void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
     rgb.N = rgb.cols * rgb.rows;
     rgb.out = sum;
 
-    rgbKernel<<<blocks, threads>>>(rgb);
+    constexpr int reduceThreads = 256;
+    constexpr int reduceBlocks = 80;
 
-    reduceSum<<<1, MAX_THREADS>>>(sum, out, blocks);
+    rgbKernel<<<reduceBlocks, reduceThreads>>>(rgb);
+
+    reduceSum<<<1, MAX_THREADS>>>(sum, out, reduceBlocks);
 
     cudaSafeCall(cudaGetLastError());
     cudaSafeCall(cudaDeviceSynchronize());
@@ -845,9 +847,7 @@ void computeRgbResidual(const float & minScale,
                         const float3 & kt,
                         const mat33 & krkinv,
                         int & sigmaSum,
-                        int & count,
-                        int threads,
-                        int blocks)
+                        int & count)
 {
     int cols = nextImage.cols ();
     int rows = nextImage.rows ();
@@ -880,7 +880,10 @@ void computeRgbResidual(const float & minScale,
     rgb.N = cols * rows;
     rgb.out = sumResidual;
 
-    residualKernel<<<blocks, threads>>>(rgb);
+    constexpr int reduceThreads = 256;
+    constexpr int reduceBlocks = 80;
+
+    residualKernel<<<reduceBlocks, reduceThreads>>>(rgb);
 
     int2 out_host = {0, 0};
     int2 * out;
@@ -888,7 +891,7 @@ void computeRgbResidual(const float & minScale,
     cudaMalloc(&out, sizeof(int2));
     cudaMemcpy(out, &out_host, sizeof(int2), cudaMemcpyHostToDevice);
 
-    reduceSum<<<1, MAX_THREADS>>>(sumResidual, out, blocks);
+    reduceSum<<<1, MAX_THREADS>>>(sumResidual, out, reduceBlocks);
 
     cudaSafeCall(cudaGetLastError());
     cudaSafeCall(cudaDeviceSynchronize());
@@ -1054,9 +1057,7 @@ void so3Step(const DeviceArray2D<unsigned char> & lastImage,
              DeviceArray<JtJJtrSO3> & out,
              float * matrixA_host,
              float * vectorB_host,
-             float * residual_host,
-             int threads,
-             int blocks)
+             float * residual_host)
 {
     int cols = nextImage.cols();
     int rows = nextImage.rows();
@@ -1078,9 +1079,12 @@ void so3Step(const DeviceArray2D<unsigned char> & lastImage,
 
     so3.out = sum;
 
-    so3Kernel<<<blocks, threads>>>(so3);
+    constexpr int reduceThreads = 256;
+    constexpr int reduceBlocks = 80;
 
-    reduceSum<<<1, MAX_THREADS>>>(sum, out, blocks);
+    so3Kernel<<<reduceBlocks, reduceThreads>>>(so3);
+
+    reduceSum<<<1, MAX_THREADS>>>(sum, out, reduceBlocks);
 
     cudaSafeCall(cudaGetLastError());
     cudaSafeCall(cudaDeviceSynchronize());

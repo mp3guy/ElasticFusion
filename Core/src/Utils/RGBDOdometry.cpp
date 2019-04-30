@@ -340,9 +340,7 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
                     outDataSO3,
                     jtj.data(),
                     jtr.data(),
-                    &residual[0],
-                    GPUConfig::getInstance().so3StepThreads,
-                    GPUConfig::getInstance().so3StepBlocks);
+                    &residual[0]);
             TOCK("so3Step");
 
             lastSO3Error = sqrt(residual[0]) / residual[1];
@@ -452,9 +450,7 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
                                    kt,
                                    krkInv,
                                    sigma,
-                                   rgbSize,
-                                   GPUConfig::getInstance().rgbResThreads,
-                                   GPUConfig::getInstance().rgbResBlocks);
+                                   rgbSize);
                 TOCK("computeRgbResidual");
             }
 
@@ -506,9 +502,7 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
                         outDataSE3,
                         A_icp.data(),
                         b_icp.data(),
-                        &residual[0],
-                        GPUConfig::getInstance().icpStepThreads,
-                        GPUConfig::getInstance().icpStepBlocks);
+                        &residual[0]);
                 TOCK("icpStep");
             }
 
@@ -532,9 +526,7 @@ void RGBDOdometry::getIncrementalTransformation(Eigen::Vector3f & trans,
                         sumDataSE3,
                         outDataSE3,
                         A_rgbd.data(),
-                        b_rgbd.data(),
-                        GPUConfig::getInstance().rgbStepThreads,
-                        GPUConfig::getInstance().rgbStepBlocks);
+                        b_rgbd.data());
                 TOCK("rgbStep");
             }
 

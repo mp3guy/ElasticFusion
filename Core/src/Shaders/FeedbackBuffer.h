@@ -52,7 +52,7 @@ class FeedbackBuffer
         GLuint uvo;
         GLuint countQuery;
         const int bufferSize;
-        unsigned int count;
+        uint32_t count;
 };
 
 #endif /* FEEDBACKBUFFER_H_ */

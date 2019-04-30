@@ -40,7 +40,7 @@ class DeformationGraph
         void initialiseGraph(std::vector<Eigen::Vector3f> * customGraph,
                              std::vector<unsigned long long int> * graphTimeMap);
 
-        void appendVertices(std::vector<unsigned long long int> * vertexTimeMap, unsigned int originalPointEnd);
+        void appendVertices(std::vector<unsigned long long int> * vertexTimeMap, uint32_t originalPointEnd);
 
         //This clears the pose map...
         void setPosesSeq(std::vector<unsigned long long int> * poseTimeMap, const std::vector<Eigen::Matrix4f> & poses);
@@ -162,7 +162,7 @@ class DeformationGraph
 
         std::vector<Eigen::Vector3f> * graphCloud;
         std::vector<unsigned long long int> sampledGraphTimes;
-        unsigned int lastPointCount;
+        uint32_t lastPointCount;
 
         void connectGraphSeq();
 

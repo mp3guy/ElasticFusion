@@ -80,7 +80,7 @@ void Ferns::generateFerns()
 
 bool Ferns::addFrame(GPUTexture * imageTexture, GPUTexture * vertexTexture, GPUTexture * normalTexture, const Eigen::Matrix4f & pose, int srcTime, const float threshold)
 {
-    Img<Eigen::Matrix<unsigned char, 3, 1>> img(height, width);
+    Img<Eigen::Matrix<uint8_t, 3, 1>> img(height, width);
     Img<Eigen::Vector4f> verts(height, width);
     Img<Eigen::Vector4f> norms(height, width);
 
@@ -93,7 +93,7 @@ bool Ferns::addFrame(GPUTexture * imageTexture, GPUTexture * vertexTexture, GPUT
                               pose,
                               srcTime,
                               width * height,
-                              (unsigned char *)img.data,
+                              (uint8_t *)img.data,
                               (Eigen::Vector4f *)verts.data,
                               (Eigen::Vector4f *)norms.data);
 
@@ -103,11 +103,11 @@ bool Ferns::addFrame(GPUTexture * imageTexture, GPUTexture * vertexTexture, GPUT
 
     for(int i = 0; i < num; i++)
     {
-        unsigned char code = badCode;
+        uint8_t code = badCode;
 
         if(verts.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2) > 0)
         {
-            const Eigen::Matrix<unsigned char, 3, 1> & pix = img.at<Eigen::Matrix<unsigned char, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0));
+            const Eigen::Matrix<uint8_t, 3, 1> & pix = img.at<Eigen::Matrix<uint8_t, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0));
 
             code = (pix(0) > conservatory.at(i).rgbd(0)) << 3 |
                    (pix(1) > conservatory.at(i).rgbd(1)) << 2 |
@@ -176,7 +176,7 @@ Eigen::Matrix4f Ferns::findFrame(std::vector<SurfaceConstraint> & constraints,
 {
     lastClosest = -1;
 
-    Img<Eigen::Matrix<unsigned char, 3, 1>> imgSmall(height, width);
+    Img<Eigen::Matrix<uint8_t, 3, 1>> imgSmall(height, width);
     Img<Eigen::Vector4f> vertSmall(height, width);
     Img<Eigen::Vector4f> normSmall(height, width);
 
@@ -192,11 +192,11 @@ Eigen::Matrix4f Ferns::findFrame(std::vector<SurfaceConstraint> & constraints,
 
     for(int i = 0; i < num; i++)
     {
-        unsigned char code = badCode;
+        uint8_t code = badCode;
 
         if(vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2) > 0)
         {
-            const Eigen::Matrix<unsigned char, 3, 1> & pix = imgSmall.at<Eigen::Matrix<unsigned char, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0));
+            const Eigen::Matrix<uint8_t, 3, 1> & pix = imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0));
 
             code = (pix(0) > conservatory.at(i).rgbd(0)) << 3 |
                    (pix(1) > conservatory.at(i).rgbd(1)) << 2 |
@@ -307,17 +307,17 @@ Eigen::Matrix4f Ferns::findFrame(std::vector<SurfaceConstraint> & constraints,
 }
 
 float Ferns::photometricCheck(const Img<Eigen::Vector4f> & vertSmall,
-                              const Img<Eigen::Matrix<unsigned char, 3, 1>> & imgSmall,
+                              const Img<Eigen::Matrix<uint8_t, 3, 1>> & imgSmall,
                               const Eigen::Matrix4f & estPose,
                               const Eigen::Matrix4f & fernPose,
-                              const unsigned char * fernRgb)
+                              const uint8_t * fernRgb)
 {
     float cx = Intrinsics::getInstance().cx() / factor;
     float cy = Intrinsics::getInstance().cy() / factor;
     float invfx = 1.0f / float(Intrinsics::getInstance().fx() / factor);
     float invfy = 1.0f / float(Intrinsics::getInstance().fy() / factor);
 
-    Img<Eigen::Matrix<unsigned char, 3, 1>> imgFern(height, width, (Eigen::Matrix<unsigned char, 3, 1> *)fernRgb);
+    Img<Eigen::Matrix<uint8_t, 3, 1>> imgFern(height, width, (Eigen::Matrix<uint8_t, 3, 1> *)fernRgb);
 
     float photoSum = 0;
     int photoCount = 0;
@@ -339,13 +339,13 @@ float Ferns::photometricCheck(const Img<Eigen::Vector4f> & vertSmall,
             Eigen::Vector2i correspondence((worldCorrPoint(0) * (1/invfx) / worldCorrPoint(2) + cx), (worldCorrPoint(1) * (1/invfy) / worldCorrPoint(2) + cy));
 
             if(correspondence(0) >= 0 && correspondence(1) >= 0 && correspondence(0) < width && correspondence(1) < height &&
-               (imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(0) > 0 ||
-                imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(1) > 0 ||
-                imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(2) > 0))
+               (imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(0) > 0 ||
+                imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(1) > 0 ||
+                imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(2) > 0))
             {
-                photoSum += abs((int)imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(0) - (int)imgSmall.at<Eigen::Matrix<unsigned char, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0));
-                photoSum += abs((int)imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(1) - (int)imgSmall.at<Eigen::Matrix<unsigned char, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1));
-                photoSum += abs((int)imgFern.at<Eigen::Matrix<unsigned char, 3, 1>>(correspondence(1), correspondence(0))(2) - (int)imgSmall.at<Eigen::Matrix<unsigned char, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2));
+                photoSum += abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(0) - (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0));
+                photoSum += abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(1) - (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1));
+                photoSum += abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(2) - (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2));
                 photoCount++;
             }
         }

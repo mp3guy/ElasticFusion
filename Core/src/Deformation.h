@@ -117,7 +117,7 @@ class Deformation
         GLuint fid;
         const int bufferSize;
         GLuint countQuery;
-        unsigned int count;
+        uint32_t count;
         Eigen::Vector4f * vertices;
 
         std::vector<std::pair<uint64_t, Eigen::Vector3f>> poseGraphPoints;

@@ -466,8 +466,8 @@ struct RGBReduction
     PtrStepSz<float3> cloud;
     float fx;
     float fy;
-    PtrStepSz<short> dIdx;
-    PtrStepSz<short> dIdy;
+    PtrStepSz<int16_t> dIdx;
+    PtrStepSz<int16_t> dIdy;
     float sobelScale;
 
     int cols;
@@ -595,8 +595,8 @@ void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
              const DeviceArray2D<float3> & cloud,
              const float & fx,
              const float & fy,
-             const DeviceArray2D<short> & dIdx,
-             const DeviceArray2D<short> & dIdy,
+             const DeviceArray2D<int16_t> & dIdx,
+             const DeviceArray2D<int16_t> & dIdy,
              const float & sobelScale,
              DeviceArray<JtJJtrSE3> & sum,
              DeviceArray<JtJJtrSE3> & out,
@@ -708,14 +708,14 @@ struct RGBResidual
 {
     float minScale;
 
-    PtrStepSz<short> dIdx;
-    PtrStepSz<short> dIdy;
+    PtrStepSz<int16_t> dIdx;
+    PtrStepSz<int16_t> dIdy;
 
     PtrStepSz<float> lastDepth;
     PtrStepSz<float> nextDepth;
 
-    PtrStepSz<unsigned char> lastImage;
-    PtrStepSz<unsigned char> nextImage;
+    PtrStepSz<uint8_t> lastImage;
+    PtrStepSz<uint8_t> nextImage;
 
     mutable PtrStepSz<DataTerm> corresImg;
 
@@ -761,11 +761,11 @@ struct RGBResidual
 
                 if(valid)
                 {
-                    short * ptr_input_x = (short*) ((unsigned char*) dIdx.data + i * pitch);
-                    short * ptr_input_y = (short*) ((unsigned char*) dIdy.data + i * pitch);
+                    int16_t * ptr_input_x = (int16_t*) ((uint8_t*) dIdx.data + i * pitch);
+                    int16_t * ptr_input_y = (int16_t*) ((uint8_t*) dIdy.data + i * pitch);
 
-                    short valx = ptr_input_x[j0];
-                    short valy = ptr_input_y[j0];
+                    int16_t valx = ptr_input_x[j0];
+                    int16_t valy = ptr_input_y[j0];
                     float mTwo = (valx * valx) + (valy * valy);
 
                     if(mTwo >= minScale)
@@ -835,12 +835,12 @@ __global__ void residualKernel (const RGBResidual rgb)
 }
 
 void computeRgbResidual(const float & minScale,
-                        const DeviceArray2D<short> & dIdx,
-                        const DeviceArray2D<short> & dIdy,
+                        const DeviceArray2D<int16_t> & dIdx,
+                        const DeviceArray2D<int16_t> & dIdy,
                         const DeviceArray2D<float> & lastDepth,
                         const DeviceArray2D<float> & nextDepth,
-                        const DeviceArray2D<unsigned char> & lastImage,
-                        const DeviceArray2D<unsigned char> & nextImage,
+                        const DeviceArray2D<uint8_t> & lastImage,
+                        const DeviceArray2D<uint8_t> & nextImage,
                         DeviceArray2D<DataTerm> & corresImg,
                         DeviceArray<int2> & sumResidual,
                         const float maxDepthDelta,
@@ -905,8 +905,8 @@ void computeRgbResidual(const float & minScale,
 
 struct SO3Reduction
 {
-    PtrStepSz<unsigned char> lastImage;
-    PtrStepSz<unsigned char> nextImage;
+    PtrStepSz<uint8_t> lastImage;
+    PtrStepSz<uint8_t> nextImage;
 
     mat33 imageBasis;
     mat33 kinv;
@@ -920,7 +920,7 @@ struct SO3Reduction
     JtJJtrSO3 * out;
 
     __device__ __forceinline__ float2
-    getGradient(const PtrStepSz<unsigned char> img, int x, int y) const
+    getGradient(const PtrStepSz<uint8_t> img, int x, int y) const
     {
         float2 gradient;
 
@@ -1048,8 +1048,8 @@ __global__ void so3Kernel (const SO3Reduction so3)
     so3();
 }
 
-void so3Step(const DeviceArray2D<unsigned char> & lastImage,
-             const DeviceArray2D<unsigned char> & nextImage,
+void so3Step(const DeviceArray2D<uint8_t> & lastImage,
+             const DeviceArray2D<uint8_t> & nextImage,
              const mat33 & imageBasis,
              const mat33 & kinv,
              const mat33 & krlr,

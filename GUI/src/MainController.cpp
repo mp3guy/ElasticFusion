@@ -86,7 +86,7 @@ MainController::MainController(int argc, char * argv[])
     icpCountThresh = 40000;
     start = 1;
     so3 = !(Parse::get().arg(argc, argv, "-nso", empty) > -1);
-    end = std::numeric_limits<unsigned short>::max(); //Funny bound, since we predict times in this format really!
+    end = std::numeric_limits<uint16_t>::max(); //Funny bound, since we predict times in this format really!
 
     Parse::get().arg(argc, argv, "-c", confidence);
     Parse::get().arg(argc, argv, "-d", depth);

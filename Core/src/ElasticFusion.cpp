@@ -236,7 +236,7 @@ void ElasticFusion::computeFeedbackBuffers()
     TOCK("feedbackBuffers");
 }
 
-bool ElasticFusion::denseEnough(const Img<Eigen::Matrix<unsigned char, 3, 1>> & img)
+bool ElasticFusion::denseEnough(const Img<Eigen::Matrix<uint8_t, 3, 1>> & img)
 {
     int sum = 0;
 
@@ -244,17 +244,17 @@ bool ElasticFusion::denseEnough(const Img<Eigen::Matrix<unsigned char, 3, 1>> & 
     {
         for(int j = 0; j < img.cols; j++)
         {
-            sum += img.at<Eigen::Matrix<unsigned char, 3, 1>>(i, j)(0) > 0 &&
-                   img.at<Eigen::Matrix<unsigned char, 3, 1>>(i, j)(1) > 0 &&
-                   img.at<Eigen::Matrix<unsigned char, 3, 1>>(i, j)(2) > 0;
+            sum += img.at<Eigen::Matrix<uint8_t, 3, 1>>(i, j)(0) > 0 &&
+                   img.at<Eigen::Matrix<uint8_t, 3, 1>>(i, j)(1) > 0 &&
+                   img.at<Eigen::Matrix<uint8_t, 3, 1>>(i, j)(2) > 0;
         }
     }
 
     return float(sum) / float(img.rows * img.cols) > 0.75f;
 }
 
-void ElasticFusion::processFrame(const unsigned char * rgb,
-                                 const unsigned short * depth,
+void ElasticFusion::processFrame(const uint8_t * rgb,
+                                 const uint16_t * depth,
                                  const int64_t & timestamp,
                                  const Eigen::Matrix4f * inPose,
                                  const float weightMultiplier,
@@ -526,7 +526,7 @@ void ElasticFusion::processFrame(const unsigned char * rgb,
                     {
                         if(consBuff.at<Eigen::Vector4f>(j, i)(2) > 0 &&
                            consBuff.at<Eigen::Vector4f>(j, i)(2) < maxDepthProcessed &&
-                           timesBuff.at<unsigned short>(j, i) > 0)
+                           timesBuff.at<uint16_t>(j, i) > 0)
                         {
                             Eigen::Vector4f worldRawPoint = currPose * Eigen::Vector4f(consBuff.at<Eigen::Vector4f>(j, i)(0),
                                                                                        consBuff.at<Eigen::Vector4f>(j, i)(1),
@@ -543,7 +543,7 @@ void ElasticFusion::processFrame(const unsigned char * rgb,
                             localDeformation.addConstraint(worldRawPoint,
                                                            worldModelPoint,
                                                            tick,
-                                                           timesBuff.at<unsigned short>(j, i),
+                                                           timesBuff.at<uint16_t>(j, i),
                                                            deforms == 0);
                         }
                     }
@@ -601,7 +601,7 @@ void ElasticFusion::processFrame(const unsigned char * rgb,
                                          confidenceThreshold,
                                          tick,
                                          tick - timeDelta,
-                                         std::numeric_limits<unsigned short>::max());
+                                         std::numeric_limits<uint16_t>::max());
             }
 
             globalModel.clean(currPose,
@@ -728,7 +728,7 @@ void ElasticFusion::savePly()
 
     int validCount = 0;
 
-    for(unsigned int i = 0; i < globalModel.lastCount(); i++)
+    for(uint32_t i = 0; i < globalModel.lastCount(); i++)
     {
         Eigen::Vector4f pos = mapData[(i * 3) + 0];
 
@@ -766,7 +766,7 @@ void ElasticFusion::savePly()
     // Open file in binary appendable
     std::ofstream fpout (filename.c_str (), std::ios::app | std::ios::binary);
 
-    for(unsigned int i = 0; i < globalModel.lastCount(); i++)
+    for(uint32_t i = 0; i < globalModel.lastCount(); i++)
     {
         Eigen::Vector4f pos = mapData[(i * 3) + 0];
 
@@ -789,13 +789,13 @@ void ElasticFusion::savePly()
             memcpy (&value, &pos[2], sizeof (float));
             fpout.write (reinterpret_cast<const char*> (&value), sizeof (float));
 
-            unsigned char r = int(col[0]) >> 16 & 0xFF;
-            unsigned char g = int(col[0]) >> 8 & 0xFF;
-            unsigned char b = int(col[0]) & 0xFF;
+            uint8_t r = int(col[0]) >> 16 & 0xFF;
+            uint8_t g = int(col[0]) >> 8 & 0xFF;
+            uint8_t b = int(col[0]) & 0xFF;
 
-            fpout.write (reinterpret_cast<const char*> (&r), sizeof (unsigned char));
-            fpout.write (reinterpret_cast<const char*> (&g), sizeof (unsigned char));
-            fpout.write (reinterpret_cast<const char*> (&b), sizeof (unsigned char));
+            fpout.write (reinterpret_cast<const char*> (&r), sizeof (uint8_t));
+            fpout.write (reinterpret_cast<const char*> (&g), sizeof (uint8_t));
+            fpout.write (reinterpret_cast<const char*> (&b), sizeof (uint8_t));
 
             memcpy (&value, &nor[0], sizeof (float));
             fpout.write (reinterpret_cast<const char*> (&value), sizeof (float));

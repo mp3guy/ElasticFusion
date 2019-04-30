@@ -64,7 +64,7 @@ Resize::~Resize()
 {
 }
 
-void Resize::image(GPUTexture * source, Img<Eigen::Matrix<unsigned char, 3, 1>> & dest)
+void Resize::image(GPUTexture * source, Img<Eigen::Matrix<uint8_t, 3, 1>> & dest)
 {
     imageFrameBuffer.Bind();
 
@@ -134,7 +134,7 @@ void Resize::vertex(GPUTexture * source, Img<Eigen::Vector4f> & dest)
     glFinish();
 }
 
-void Resize::time(GPUTexture * source, Img<unsigned short> & dest)
+void Resize::time(GPUTexture * source, Img<uint16_t> & dest)
 {
     timeFrameBuffer.Bind();
 

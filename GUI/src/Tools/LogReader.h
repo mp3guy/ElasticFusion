@@ -68,15 +68,15 @@ class LogReader
         bool flipColors;
         int64_t timestamp;
 
-        unsigned short * depth;
-        unsigned char * rgb;
+        uint16_t * depth;
+        uint8_t * rgb;
         int currentFrame;
 
     protected:
         Bytef * decompressionBufferDepth;
         Bytef * decompressionBufferImage;
-        unsigned char * depthReadBuffer;
-        unsigned char * imageReadBuffer;
+        uint8_t * depthReadBuffer;
+        uint8_t * imageReadBuffer;
         int32_t depthSize;
         int32_t imageSize;
 

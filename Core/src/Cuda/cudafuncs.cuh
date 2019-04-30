@@ -60,6 +60,7 @@
 
 #include "containers/device_array.hpp"
 #include "types.cuh"
+#include <stdint.h>
 
 void icpStep(const mat33& Rcurr,
              const float3& tcurr,
@@ -83,16 +84,16 @@ void rgbStep(const DeviceArray2D<DataTerm> & corresImg,
              const DeviceArray2D<float3> & cloud,
              const float & fx,
              const float & fy,
-             const DeviceArray2D<short> & dIdx,
-             const DeviceArray2D<short> & dIdy,
+             const DeviceArray2D<int16_t> & dIdx,
+             const DeviceArray2D<int16_t> & dIdy,
              const float & sobelScale,
              DeviceArray<JtJJtrSE3> & sum,
              DeviceArray<JtJJtrSE3> & out,
              float * matrixA_host,
              float * vectorB_host);
 
-void so3Step(const DeviceArray2D<unsigned char> & lastImage,
-             const DeviceArray2D<unsigned char> & nextImage,
+void so3Step(const DeviceArray2D<uint8_t> & lastImage,
+             const DeviceArray2D<uint8_t> & nextImage,
              const mat33 & imageBasis,
              const mat33 & kinv,
              const mat33 & krlr,
@@ -103,12 +104,12 @@ void so3Step(const DeviceArray2D<unsigned char> & lastImage,
              float * residual_host);
 
 void computeRgbResidual(const float & minScale,
-                        const DeviceArray2D<short> & dIdx,
-                        const DeviceArray2D<short> & dIdy,
+                        const DeviceArray2D<int16_t> & dIdx,
+                        const DeviceArray2D<int16_t> & dIdy,
                         const DeviceArray2D<float> & lastDepth,
                         const DeviceArray2D<float> & nextDepth,
-                        const DeviceArray2D<unsigned char> & lastImage,
-                        const DeviceArray2D<unsigned char> & nextImage,
+                        const DeviceArray2D<uint8_t> & lastImage,
+                        const DeviceArray2D<uint8_t> & nextImage,
                         DeviceArray2D<DataTerm> & corresImg,
                         DeviceArray<int2> & sumResidual,
                         const float maxDepthDelta,
@@ -118,7 +119,7 @@ void computeRgbResidual(const float & minScale,
                         int & count);
 
 void createVMap(const CameraModel& intr,
-                const DeviceArray2D<unsigned short> & depth,
+                const DeviceArray2D<uint16_t> & depth,
                 DeviceArray2D<float> & vmap,
                 const float depthCutoff);
 
@@ -143,8 +144,8 @@ void resizeVMap(const DeviceArray2D<float>& input,
 void resizeNMap(const DeviceArray2D<float>& input,
                 DeviceArray2D<float>& output);
 
-void imageBGRToIntensity(cudaArray * cuArr,
-                         DeviceArray2D<unsigned char> & dst);
+void imageBGRToIntensity(cudaArray_t cuArr,
+                         DeviceArray2D<uint8_t> & dst);
 
 void verticesToDepth(DeviceArray<float>& vmap_src,
                      DeviceArray2D<float> & dst,
@@ -155,17 +156,19 @@ void projectToPointCloud(const DeviceArray2D<float> & depth,
                          CameraModel & intrinsics,
                          const int & level);
 
-void pyrDown(const DeviceArray2D<unsigned short> & src,
-             DeviceArray2D<unsigned short> & dst);
+void pyrDown(const DeviceArray2D<uint16_t> & src,
+             DeviceArray2D<uint16_t> & dst);
+
+void pyrDown(const cudaArray_t & src, const size_t srcWidth, const size_t srcHeight, DeviceArray2D<uint16_t> & dst);
 
 void pyrDownGaussF(const DeviceArray2D<float> & src,
                    DeviceArray2D<float> & dst);
 
-void pyrDownUcharGauss(const DeviceArray2D<unsigned char>& src,
-                       DeviceArray2D<unsigned char> & dst);
+void pyrDownUcharGauss(const DeviceArray2D<uint8_t>& src,
+                       DeviceArray2D<uint8_t> & dst);
 
-void computeDerivativeImages(DeviceArray2D<unsigned char>& src,
-                             DeviceArray2D<short>& dx,
-                             DeviceArray2D<short>& dy);
+void computeDerivativeImages(DeviceArray2D<uint8_t>& src,
+                             DeviceArray2D<int16_t>& dx,
+                             DeviceArray2D<int16_t>& dy);
 
 #endif /* CUDA_CUDAFUNCS_CUH_ */

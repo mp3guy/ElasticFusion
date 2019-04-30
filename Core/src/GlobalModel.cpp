@@ -597,7 +597,7 @@ void GlobalModel::clean(const Eigen::Matrix4f & pose,
     TOCK("Fuse::Copy");
 }
 
-unsigned int GlobalModel::lastCount()
+uint32_t GlobalModel::lastCount()
 {
     return count;
 }

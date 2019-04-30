@@ -97,8 +97,8 @@ void LiveLogReader::getNext()
 
     timestamp = lastFrameTime;
 
-    rgb = (unsigned char *)&decompressionBufferImage[0];
-    depth = (unsigned short *)&decompressionBufferDepth[0];
+    rgb = (uint8_t *)&decompressionBufferImage[0];
+    depth = (uint16_t *)&decompressionBufferDepth[0];
 
     imageReadBuffer = 0;
     depthReadBuffer = 0;

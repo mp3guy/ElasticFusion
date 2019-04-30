@@ -70,7 +70,7 @@ void DeformationGraph::initialiseGraph(std::vector<Eigen::Vector3f> * customGrap
 
     graphNodes.resize(graphCloud->size());
 
-    for(unsigned int i = 0; i < graphCloud->size(); i++)
+    for(uint32_t i = 0; i < graphCloud->size(); i++)
     {
         graphNodes[i].id = i;
 
@@ -90,7 +90,7 @@ void DeformationGraph::initialiseGraph(std::vector<Eigen::Vector3f> * customGrap
     initialised = true;
 }
 
-void DeformationGraph::appendVertices(std::vector<unsigned long long int> * vertexTimeMap, unsigned int originalPointEnd)
+void DeformationGraph::appendVertices(std::vector<unsigned long long int> * vertexTimeMap, uint32_t originalPointEnd)
 {
     vertexMap.resize(lastPointCount);
 
@@ -134,16 +134,16 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
 {
     poseMap.clear();
 
-    const unsigned int lookBack = 20;
+    const uint32_t lookBack = 20;
 
     std::vector<int> pointIdxNKNSearch(k + 1);
     std::vector<float> pointNKNSquaredDistance(k + 1);
 
-    for(unsigned int i = 0; i < poses.size(); i++)
+    for(uint32_t i = 0; i < poses.size(); i++)
     {
         unsigned long long int poseTime = poseTimeMap->at(i);
 
-        unsigned int foundIndex = 0;
+        uint32_t foundIndex = 0;
 
         int imin = 0;
         int imax = sampledGraphTimes.size() - 1;
@@ -191,7 +191,7 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
             foundIndex = graphCloud->size() - 1;
         }
 
-        unsigned int distanceBack = 0;
+        uint32_t distanceBack = 0;
         for(int j = (int)foundIndex; j >= 0; j--)
         {
             std::pair<float, int> newNode;
@@ -208,7 +208,7 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
 
         if(distanceBack != lookBack)
         {
-            for(unsigned int j = foundIndex + 1; j < sampledGraphTimes.size(); j++)
+            for(uint32_t j = foundIndex + 1; j < sampledGraphTimes.size(); j++)
             {
                 std::pair<float, int> newNode;
                 newNode.first = (graphCloud->at(j) - poses.at(i).topRightCorner(3, 1)).norm();
@@ -232,13 +232,13 @@ void DeformationGraph::setPosesSeq(std::vector<unsigned long long int> * poseTim
 
         double weightSum = 0;
 
-        for(unsigned int j = 0; j < (unsigned int)k; j++)
+        for(uint32_t j = 0; j < (uint32_t)k; j++)
         {
             newMap.push_back(VertexWeightMap(pow(1.0f - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax, 2), nearNodes.at(j).second));
             weightSum += newMap.back().weight;
         }
 
-        for(unsigned int j = 0; j < newMap.size(); j++)
+        for(uint32_t j = 0; j < newMap.size(); j++)
         {
             newMap.at(j).weight /= weightSum;
         }
@@ -264,7 +264,7 @@ void DeformationGraph::connectGraphSeq()
         }
     }
 
-    for(unsigned int i = k / 2; i < graphCloud->size() - (k / 2); i++)
+    for(uint32_t i = k / 2; i < graphCloud->size() - (k / 2); i++)
     {
         for(int n = 0; n < k / 2; n++)
         {
@@ -273,9 +273,9 @@ void DeformationGraph::connectGraphSeq()
         }
     }
 
-    for(unsigned int i = graphCloud->size() - (k / 2); i < graphCloud->size(); i++)
+    for(uint32_t i = graphCloud->size() - (k / 2); i < graphCloud->size(); i++)
     {
-        for(unsigned int n = graphCloud->size() - (k + 1); n < graphCloud->size(); n++)
+        for(uint32_t n = graphCloud->size() - (k + 1); n < graphCloud->size(); n++)
         {
             if(i == n)
             {
@@ -289,16 +289,16 @@ void DeformationGraph::connectGraphSeq()
 
 void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * vertexTimeMap)
 {
-    const unsigned int lookBack = 20;
+    const uint32_t lookBack = 20;
 
     std::vector<int> pointIdxNKNSearch(k + 1);
     std::vector<float> pointNKNSquaredDistance(k + 1);
 
-    for(unsigned int i = lastPointCount; i < sourceVertices->size(); i++)
+    for(uint32_t i = lastPointCount; i < sourceVertices->size(); i++)
     {
         unsigned long long int vertexTime = vertexTimeMap->at(i);
 
-        unsigned int foundIndex = 0;
+        uint32_t foundIndex = 0;
 
         int imin = 0;
         int imax = sampledGraphTimes.size() - 1;
@@ -346,7 +346,7 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * v
             foundIndex = graphCloud->size() - 1;
         }
 
-        unsigned int distanceBack = 0;
+        uint32_t distanceBack = 0;
         for(int j = (int)foundIndex; j >= 0; j--)
         {
             std::pair<float, int> newNode;
@@ -363,7 +363,7 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * v
 
         if(distanceBack != lookBack)
         {
-            for(unsigned int j = foundIndex + 1; j < sampledGraphTimes.size(); j++)
+            for(uint32_t j = foundIndex + 1; j < sampledGraphTimes.size(); j++)
             {
                 std::pair<float, int> newNode;
                 newNode.first = (graphCloud->at(j) - sourceVertices->at(i)).norm();
@@ -387,13 +387,13 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int> * v
 
         double weightSum = 0;
 
-        for(unsigned int j = 0; j < (unsigned int)k; j++)
+        for(uint32_t j = 0; j < (uint32_t)k; j++)
         {
             newMap.push_back(VertexWeightMap(pow(1.0f - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax, 2), nearNodes.at(j).second));
             weightSum += newMap.back().weight;
         }
 
-        for(unsigned int j = 0; j < newMap.size(); j++)
+        for(uint32_t j = 0; j < newMap.size(); j++)
         {
             newMap.at(j).weight /= weightSum;
         }
@@ -408,7 +408,7 @@ void DeformationGraph::applyGraphToVertices()
 {
     Eigen::Vector3f position;
 
-    for(unsigned int i = 0; i < sourceVertices->size(); i++)
+    for(uint32_t i = 0; i < sourceVertices->size(); i++)
     {
         computeVertexPosition(i, position);
         sourceVertices->at(i) = position;
@@ -420,7 +420,7 @@ void DeformationGraph::addConstraint(int vertexId, Eigen::Vector3f & target)
     assert(initialised);
 
     //Overwrites old constraint
-    for(unsigned int i = 0; i < constraints.size(); i++)
+    for(uint32_t i = 0; i < constraints.size(); i++)
     {
         if(constraints.at(i).vertexId == vertexId)
         {
@@ -437,7 +437,7 @@ void DeformationGraph::addRelativeConstraint(int vertexId, int targetId)
     assert(initialised);
 
     //Overwrites old constraint
-    for(unsigned int i = 0; i < constraints.size(); i++)
+    for(uint32_t i = 0; i < constraints.size(); i++)
     {
         if(constraints.at(i).vertexId == vertexId)
         {
@@ -541,7 +541,7 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
     //We know exact counts per row...
     int lastRow = 0;
 
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
         if(graph.at(j)->enabled)
         {
@@ -594,12 +594,12 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
         }
     }
 
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
         int colOffset = graph.at(j)->id * numVariables;
 
         //For each neighbour
-        for(unsigned int n = 0; n < graph.at(j)->neighbours.size(); n++)
+        for(uint32_t n = 0; n < graph.at(j)->neighbours.size(); n++)
         {
             if(graph.at(graph.at(j)->neighbours.at(n))->enabled || graph.at(j)->enabled)
             {
@@ -650,7 +650,7 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
         }
     }
 
-    for(unsigned int l = 0; l < constraints.size(); l++)
+    for(uint32_t l = 0; l < constraints.size(); l++)
     {
         const std::vector<VertexWeightMap> & weightMap = vertexMap.at(constraints.at(l).vertexId);
 
@@ -695,7 +695,7 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
 
                 std::vector<VertexWeightMap> & relWeightMap = vertexMap.at(constraints.at(l).targetId);
 
-                for(unsigned int i = 0; i < relWeightMap.size(); i++)
+                for(uint32_t i = 0; i < relWeightMap.size(); i++)
                 {
                     relWeightMap.at(i).relative = true;
                 }
@@ -709,7 +709,7 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
 
                 std::map<int, bool> checkList;
 
-                for(unsigned int i = 0; i < weightMapMixed.size(); i++)
+                for(uint32_t i = 0; i < weightMapMixed.size(); i++)
                 {
                     if(graph.at(weightMapMixed.at(i).node)->enabled)
                     {
@@ -804,7 +804,7 @@ void DeformationGraph::sparseJacobian(Jacobian & jacobian, const int numRows, co
             {
                 //Populate each column on the current Jacobian block rows
                 //WARNING: Assumes weightMap is sorted by id!
-                for(unsigned int i = 0; i < weightMap.size(); i++)
+                for(uint32_t i = 0; i < weightMap.size(); i++)
                 {
                     if(graph.at(weightMap.at(i).node)->enabled)
                     {
@@ -846,7 +846,7 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows)
 
     int numRows = 0;
 
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
         if(graph.at(j)->enabled)
         {
@@ -875,9 +875,9 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows)
         }
     }
 
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
-        for(unsigned int n = 0; n < graph.at(j)->neighbours.size(); n++)
+        for(uint32_t n = 0; n < graph.at(j)->neighbours.size(); n++)
         {
             if(graph.at(graph.at(j)->neighbours.at(n))->enabled || graph.at(j)->enabled)
             {
@@ -889,7 +889,7 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows)
         }
     }
 
-    for(unsigned int l = 0; l < constraints.size(); l++)
+    for(uint32_t l = 0; l < constraints.size(); l++)
     {
         const std::vector<VertexWeightMap> & weightMap = vertexMap.at(constraints.at(l).vertexId);
 
@@ -950,7 +950,7 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows)
 
 void DeformationGraph::resetGraph()
 {
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
         graph.at(j)->rotation.setIdentity();
         graph.at(j)->translation.setIdentity();
@@ -964,7 +964,7 @@ void DeformationGraph::applyDeltaSparse(Eigen::VectorXd & delta)
     //Current row
     int z = 0;
 
-    for(unsigned int j = 0; j < graph.size(); j++)
+    for(uint32_t j = 0; j < graph.size(); j++)
     {
         if(graph.at(j)->enabled)
         {
@@ -1001,7 +1001,7 @@ void DeformationGraph::computeVertexPosition(int vertexId, Eigen::Vector3f & pos
 
     Eigen::Vector3f sourcePosition = sourceVertices->at(vertexId);
 
-    for(unsigned int i = 0; i < weightMap.size(); i++)
+    for(uint32_t i = 0; i < weightMap.size(); i++)
     {
         position += weightMap.at(i).weight * (graph.at(weightMap.at(i).node)->rotation * (sourcePosition - graph.at(weightMap.at(i).node)->position) +
                                               graph.at(weightMap.at(i).node)->position + graph.at(weightMap.at(i).node)->translation);
@@ -1012,7 +1012,7 @@ float DeformationGraph::nonRelativeConstraintError()
 {
     float result = 0;
 
-    for(unsigned int l = 0; l < constraints.size(); l++)
+    for(uint32_t l = 0; l < constraints.size(); l++)
     {
         if(!constraints.at(l).relative)
         {

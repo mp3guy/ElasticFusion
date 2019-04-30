@@ -28,14 +28,14 @@ class Img
         Img(const int rows, const int cols)
          : rows(rows),
            cols(cols),
-           data(new unsigned char[rows * cols * sizeof(T)]),
+           data(new uint8_t[rows * cols * sizeof(T)]),
            owned(true)
         {}
 
         Img(const int rows, const int cols, T * data)
          : rows(rows),
            cols(cols),
-           data((unsigned char *)data),
+           data((uint8_t *)data),
            owned(false)
         {}
 
@@ -49,7 +49,7 @@ class Img
 
         const int rows;
         const int cols;
-        unsigned char * data;
+        uint8_t * data;
         const bool owned;
 
         template<typename V> inline

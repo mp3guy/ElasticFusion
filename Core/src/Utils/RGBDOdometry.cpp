@@ -108,6 +108,8 @@ RGBDOdometry::RGBDOdometry(int width,
     minimumGradientMagnitudes[0] = 5;
     minimumGradientMagnitudes[1] = 3;
     minimumGradientMagnitudes[2] = 1;
+
+    assert(NUM_PYRS > 1);
 }
 
 RGBDOdometry::~RGBDOdometry()
@@ -121,10 +123,12 @@ void RGBDOdometry::initICP(GPUTexture * filteredDepth, const float depthCutoff)
 
     cudaGraphicsMapResources(1, &filteredDepth->cudaRes);
     cudaGraphicsSubResourceGetMappedArray(&textPtr, filteredDepth->cudaRes, 0, 0);
-    cudaMemcpy2DFromArray(depth_tmp[0].ptr(0), depth_tmp[0].step(), textPtr, 0, 0, depth_tmp[0].colsBytes(), depth_tmp[0].rows(), cudaMemcpyDeviceToDevice);
+
+    pyrDown(textPtr, depth_tmp[0].cols(), depth_tmp[0].rows(), depth_tmp[1]);
+
     cudaGraphicsUnmapResources(1, &filteredDepth->cudaRes);
 
-    for(int i = 1; i < NUM_PYRS; ++i)
+    for(int i = 2; i < NUM_PYRS; ++i)
     {
         pyrDown(depth_tmp[i - 1], depth_tmp[i]);
     }
@@ -203,7 +207,7 @@ void RGBDOdometry::initICPModel(GPUTexture * predictedVertices,
 
 void RGBDOdometry::populateRGBDData(GPUTexture * rgb,
                                     DeviceArray2D<float> * destDepths,
-                                    DeviceArray2D<unsigned char> * destImages)
+                                    DeviceArray2D<uint8_t> * destImages)
 {
     verticesToDepth(vmaps_tmp, destDepths[0], maxDepthRGB);
 
@@ -215,11 +219,8 @@ void RGBDOdometry::populateRGBDData(GPUTexture * rgb,
     cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &rgb->cudaRes);
-
     cudaGraphicsSubResourceGetMappedArray(&textPtr, rgb->cudaRes, 0, 0);
-
     imageBGRToIntensity(textPtr, destImages[0]);
-
     cudaGraphicsUnmapResources(1, &rgb->cudaRes);
 
     for(int i = 0; i + 1 < NUM_PYRS; i++)
@@ -247,11 +248,8 @@ void RGBDOdometry::initFirstRGB(GPUTexture * rgb)
     cudaArray_t textPtr;
 
     cudaGraphicsMapResources(1, &rgb->cudaRes);
-
     cudaGraphicsSubResourceGetMappedArray(&textPtr, rgb->cudaRes, 0, 0);
-
     imageBGRToIntensity(textPtr, lastNextImage[0]);
-
     cudaGraphicsUnmapResources(1, &rgb->cudaRes);
 
     for(int i = 0; i + 1 < NUM_PYRS; i++)

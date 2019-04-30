@@ -35,9 +35,9 @@ class Resize
                int destHeight);
         virtual ~Resize();
 
-        void image(GPUTexture * source, Img<Eigen::Matrix<unsigned char, 3, 1>> & dest);
+        void image(GPUTexture * source, Img<Eigen::Matrix<uint8_t, 3, 1>> & dest);
         void vertex(GPUTexture * source, Img<Eigen::Vector4f> & dest);
-        void time(GPUTexture * source, Img<unsigned short> & dest);
+        void time(GPUTexture * source, Img<uint16_t> & dest);
 
         GPUTexture imageTexture;
         GPUTexture vertexTexture;

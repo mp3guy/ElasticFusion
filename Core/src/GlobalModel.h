@@ -83,7 +83,7 @@ class GlobalModel
                    const float maxDepth,
                    const bool isFern);
 
-        unsigned int lastCount();
+        uint32_t lastCount();
 
         Eigen::Vector4f * downloadMap();
 
@@ -95,7 +95,7 @@ class GlobalModel
         const int bufferSize;
 
         GLuint countQuery;
-        unsigned int count;
+        uint32_t count;
 
         std::shared_ptr<Shader> initProgram;
         std::shared_ptr<Shader> drawProgram;

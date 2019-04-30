@@ -80,7 +80,7 @@ class Ferns
                       const Eigen::Matrix4f & pose,
                       const int srcTime,
                       const int numPixels,
-                      unsigned char * rgb = 0,
+                      uint8_t * rgb = 0,
                       Eigen::Vector4f * verts = 0,
                       Eigen::Vector4f * norms = 0)
                  : goodCodes(0),
@@ -91,11 +91,11 @@ class Ferns
                    initVerts(verts),
                    initNorms(norms)
                 {
-                    codes = new unsigned char[n];
+                    codes = new uint8_t[n];
 
                     if(rgb)
                     {
-                        this->initRgb = new unsigned char[numPixels * 3];
+                        this->initRgb = new uint8_t[numPixels * 3];
                         memcpy(this->initRgb, rgb, numPixels * 3);
                     }
 
@@ -126,12 +126,12 @@ class Ferns
                         delete [] initNorms;
                 }
 
-                unsigned char * codes;
+                uint8_t * codes;
                 int goodCodes;
                 const int id;
                 Eigen::Matrix4f pose;
                 const int srcTime;
-                unsigned char * initRgb;
+                uint8_t * initRgb;
                 Eigen::Vector4f * initVerts;
                 Eigen::Vector4f * initNorms;
         };
@@ -151,7 +151,7 @@ class Ferns
         std::uniform_int_distribution<int32_t> dDist;
 
         int lastClosest;
-        const unsigned char badCode;
+        const uint8_t badCode;
         RGBDOdometry rgbd;
 
     private:
@@ -161,10 +161,10 @@ class Ferns
         float blockHDAware(const Frame * f1, const Frame * f2);
 
         float photometricCheck(const Img<Eigen::Vector4f> & vertSmall,
-                               const Img<Eigen::Matrix<unsigned char, 3, 1>> & imgSmall,
+                               const Img<Eigen::Matrix<uint8_t, 3, 1>> & imgSmall,
                                const Eigen::Matrix4f & estPose,
                                const Eigen::Matrix4f & fernPose,
-                               const unsigned char * fernRgb);
+                               const uint8_t * fernRgb);
 
         GPUTexture vertFern;
         GPUTexture vertCurrent;
@@ -177,7 +177,7 @@ class Ferns
 
         Resize resize;
 
-        Img<Eigen::Matrix<unsigned char, 3, 1>> imageBuff;
+        Img<Eigen::Matrix<uint8_t, 3, 1>> imageBuff;
         Img<Eigen::Vector4f> vertBuff;
         Img<Eigen::Vector4f> normBuff;
 };

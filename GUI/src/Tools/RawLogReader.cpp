@@ -30,8 +30,8 @@ RawLogReader::RawLogReader(std::string file, bool flipColors)
     auto tmp = fread(&numFrames,sizeof(int32_t),1,fp);
     assert(tmp);
 
-    depthReadBuffer = new unsigned char[numPixels * 2];
-    imageReadBuffer = new unsigned char[numPixels * 3];
+    depthReadBuffer = new uint8_t[numPixels * 2];
+    imageReadBuffer = new uint8_t[numPixels * 3];
     decompressionBufferDepth = new Bytef[Resolution::getInstance().numPixels() * 2];
     decompressionBufferImage = new Bytef[Resolution::getInstance().numPixels() * 3];
 }
@@ -99,15 +99,15 @@ void RawLogReader::getCore()
     }
     else if(imageSize > 0)
     {
-        jpeg.readData(imageReadBuffer, imageSize, (unsigned char *)&decompressionBufferImage[0]);
+        jpeg.readData(imageReadBuffer, imageSize, (uint8_t *)&decompressionBufferImage[0]);
     }
     else
     {
         memset(&decompressionBufferImage[0], 0, numPixels * 3);
     }
 
-    depth = (unsigned short *)decompressionBufferDepth;
-    rgb = (unsigned char *)&decompressionBufferImage[0];
+    depth = (uint16_t *)decompressionBufferDepth;
+    rgb = (uint8_t *)&decompressionBufferImage[0];
 
     if(flipColors)
     {

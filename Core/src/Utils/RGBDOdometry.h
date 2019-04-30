@@ -74,9 +74,9 @@ class RGBDOdometry
     private:
         void populateRGBDData(GPUTexture * rgb,
                               DeviceArray2D<float> * destDepths,
-                              DeviceArray2D<unsigned char> * destImages);
+                              DeviceArray2D<uint8_t> * destImages);
 
-        std::vector<DeviceArray2D<unsigned short>> depth_tmp;
+        std::vector<DeviceArray2D<uint16_t>> depth_tmp;
 
         DeviceArray<float> vmaps_tmp;
         DeviceArray<float> nmaps_tmp;
@@ -103,17 +103,17 @@ class RGBDOdometry
 
         std::vector<int2> pyrDims;
 
-        static const int NUM_PYRS = 3;
+        static constexpr int NUM_PYRS = 3;
 
         DeviceArray2D<float> lastDepth[NUM_PYRS];
-        DeviceArray2D<unsigned char> lastImage[NUM_PYRS];
+        DeviceArray2D<uint8_t> lastImage[NUM_PYRS];
 
         DeviceArray2D<float> nextDepth[NUM_PYRS];
-        DeviceArray2D<unsigned char> nextImage[NUM_PYRS];
-        DeviceArray2D<short> nextdIdx[NUM_PYRS];
-        DeviceArray2D<short> nextdIdy[NUM_PYRS];
+        DeviceArray2D<uint8_t> nextImage[NUM_PYRS];
+        DeviceArray2D<int16_t> nextdIdx[NUM_PYRS];
+        DeviceArray2D<int16_t> nextdIdy[NUM_PYRS];
 
-        DeviceArray2D<unsigned char> lastNextImage[NUM_PYRS];
+        DeviceArray2D<uint8_t> lastNextImage[NUM_PYRS];
 
         DeviceArray2D<DataTerm> corresImg[NUM_PYRS];
 

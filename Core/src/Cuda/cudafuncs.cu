@@ -53,8 +53,10 @@
 #include "convenience.cuh"
 #include "operators.cuh"
 
+texture<uchar4, 2, cudaReadModeElementType> uchar4Tex;
+texture<uint16_t, 2, cudaReadModeElementType> uint16Tex;
 
-__global__ void pyrDownGaussKernel (const PtrStepSz<unsigned short> src, PtrStepSz<unsigned short> dst, float sigma_color)
+__global__ void pyrDownGaussKernel (const PtrStepSz<uint16_t> src, PtrStepSz<uint16_t> dst, float sigma_color)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -93,7 +95,7 @@ __global__ void pyrDownGaussKernel (const PtrStepSz<unsigned short> src, PtrStep
     dst.ptr (y)[x] = static_cast<int>(sum /wall);
 }
 
-void pyrDown(const DeviceArray2D<unsigned short> & src, DeviceArray2D<unsigned short> & dst)
+void pyrDown(const DeviceArray2D<uint16_t> & src, DeviceArray2D<uint16_t> & dst)
 {
     dst.create (src.rows () / 2, src.cols () / 2);
 
@@ -104,9 +106,67 @@ void pyrDown(const DeviceArray2D<unsigned short> & src, DeviceArray2D<unsigned s
 
     pyrDownGaussKernel<<<grid, block>>>(src, dst, sigma_color);
     cudaSafeCall ( cudaGetLastError () );
-};
+}
 
-__global__ void computeVmapKernel(const PtrStepSz<unsigned short> depth, PtrStep<float> vmap, float fx_inv, float fy_inv, float cx, float cy, float depthCutoff)
+
+__global__ void pyrDownGaussKernelTex(const int srcWidth, const int srcHeight, PtrStepSz<uint16_t> dst, float sigma_color)
+{
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x >= dst.cols || y >= dst.rows)
+        return;
+
+    const int D = 5;
+
+    const int center = tex2D(uint16Tex, 2 * x, 2 * y);
+
+    int x_mi = max(0, 2*x - D/2) - 2*x;
+    int y_mi = max(0, 2*y - D/2) - 2*y;
+
+    int x_ma = min(srcWidth, 2*x -D/2+D) - 2*x;
+    int y_ma = min(srcHeight, 2*y -D/2+D) - 2*y;
+
+    float sum = 0;
+    float wall = 0;
+
+    float weights[] = {0.375f, 0.25f, 0.0625f} ;
+
+    for(int yi = y_mi; yi < y_ma; ++yi)
+        for(int xi = x_mi; xi < x_ma; ++xi)
+        {
+            int val = tex2D(uint16Tex, 2*x + xi, 2*y + yi);
+
+            if (abs (val - center) < 3 * sigma_color)
+            {
+                sum += val * weights[abs(xi)] * weights[abs(yi)];
+                wall += weights[abs(xi)] * weights[abs(yi)];
+            }
+        }
+
+
+    dst.ptr (y)[x] = static_cast<int>(sum /wall);
+}
+
+void pyrDown(const cudaArray_t & src, const size_t srcWidth, const size_t srcHeight, DeviceArray2D<uint16_t> & dst)
+{
+    dst.create (srcHeight / 2, srcWidth / 2);
+
+    dim3 block (32, 8);
+    dim3 grid (getGridDim (dst.cols (), block.x), getGridDim (dst.rows (), block.y));
+
+    constexpr float sigma_color = 30.0f;
+
+    cudaSafeCall(cudaBindTextureToArray(uint16Tex, src));
+
+    pyrDownGaussKernelTex<<<grid, block>>>(srcWidth, srcHeight, dst, sigma_color);
+
+    cudaSafeCall(cudaGetLastError());
+
+    cudaSafeCall(cudaUnbindTexture(uchar4Tex));
+}
+
+__global__ void computeVmapKernel(const PtrStepSz<uint16_t> depth, PtrStep<float> vmap, float fx_inv, float fy_inv, float cx, float cy, float depthCutoff)
 {
     int u = threadIdx.x + blockIdx.x * blockDim.x;
     int v = threadIdx.y + blockIdx.y * blockDim.y;
@@ -132,7 +192,7 @@ __global__ void computeVmapKernel(const PtrStepSz<unsigned short> depth, PtrStep
     }
 }
 
-void createVMap(const CameraModel& intr, const DeviceArray2D<unsigned short> & depth, DeviceArray2D<float> & vmap, const float depthCutoff)
+void createVMap(const CameraModel& intr, const DeviceArray2D<uint16_t> & depth, DeviceArray2D<float> & vmap, const float depthCutoff)
 {
     vmap.create (depth.rows () * 3, depth.cols ());
 
@@ -465,9 +525,9 @@ void pyrDownGaussF(const DeviceArray2D<float>& src, DeviceArray2D<float> & dst)
     cudaSafeCall ( cudaGetLastError () );
 
     cudaFree(gauss_cuda);
-};
+}
 
-__global__ void pyrDownKernelIntensityGauss(const PtrStepSz<unsigned char> src, PtrStepSz<unsigned char> dst, float * gaussKernel)
+__global__ void pyrDownKernelIntensityGauss(const PtrStepSz<uint8_t> src, PtrStepSz<uint8_t> dst, float * gaussKernel)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -499,7 +559,7 @@ __global__ void pyrDownKernelIntensityGauss(const PtrStepSz<unsigned char> src, 
     dst.ptr (y)[x] = (sum / (float)count);
 }
 
-void pyrDownUcharGauss(const DeviceArray2D<unsigned char>& src, DeviceArray2D<unsigned char> & dst)
+void pyrDownUcharGauss(const DeviceArray2D<uint8_t>& src, DeviceArray2D<uint8_t> & dst)
 {
     dst.create (src.rows () / 2, src.cols () / 2);
 
@@ -521,7 +581,7 @@ void pyrDownUcharGauss(const DeviceArray2D<unsigned char>& src, DeviceArray2D<un
     cudaSafeCall ( cudaGetLastError () );
 
     cudaFree(gauss_cuda);
-};
+}
 
 __global__ void verticesToDepthKernel(const float * vmap_src, PtrStepSz<float> dst, float cutOff)
 {
@@ -543,11 +603,9 @@ void verticesToDepth(DeviceArray<float>& vmap_src, DeviceArray2D<float> & dst, f
 
     verticesToDepthKernel<<<grid, block>>>(vmap_src, dst, cutOff);
     cudaSafeCall ( cudaGetLastError () );
-};
+}
 
-texture<uchar4, 2, cudaReadModeElementType> inTex;
-
-__global__ void bgr2IntensityKernel(PtrStepSz<unsigned char> dst)
+__global__ void bgr2IntensityKernel(PtrStepSz<uint8_t> dst)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -555,31 +613,31 @@ __global__ void bgr2IntensityKernel(PtrStepSz<unsigned char> dst)
     if (x >= dst.cols || y >= dst.rows)
         return;
 
-    uchar4 src = tex2D(inTex, x, y);
+    uchar4 src = tex2D(uchar4Tex, x, y);
 
     int value = (float)src.x * 0.114f + (float)src.y * 0.299f + (float)src.z * 0.587f;
 
     dst.ptr (y)[x] = value;
 }
 
-void imageBGRToIntensity(cudaArray * cuArr, DeviceArray2D<unsigned char> & dst)
+void imageBGRToIntensity(cudaArray_t cuArr, DeviceArray2D<uint8_t> & dst)
 {
     dim3 block (32, 8);
     dim3 grid (getGridDim (dst.cols (), block.x), getGridDim (dst.rows (), block.y));
 
-    cudaSafeCall(cudaBindTextureToArray(inTex, cuArr));
+    cudaSafeCall(cudaBindTextureToArray(uchar4Tex, cuArr));
 
     bgr2IntensityKernel<<<grid, block>>>(dst);
 
     cudaSafeCall(cudaGetLastError());
 
-    cudaSafeCall(cudaUnbindTexture(inTex));
-};
+    cudaSafeCall(cudaUnbindTexture(uchar4Tex));
+}
 
 __constant__ float gsobel_x3x3[9];
 __constant__ float gsobel_y3x3[9];
 
-__global__ void applyKernel(const PtrStepSz<unsigned char> src, PtrStep<short> dx, PtrStep<short> dy)
+__global__ void applyKernel(const PtrStepSz<uint8_t> src, PtrStep<int16_t> dx, PtrStep<int16_t> dy)
 {
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -605,7 +663,7 @@ __global__ void applyKernel(const PtrStepSz<unsigned char> src, PtrStep<short> d
   dy.ptr(y)[x] = dyVal;
 }
 
-void computeDerivativeImages(DeviceArray2D<unsigned char>& src, DeviceArray2D<short>& dx, DeviceArray2D<short>& dy)
+void computeDerivativeImages(DeviceArray2D<uint8_t>& src, DeviceArray2D<int16_t>& dx, DeviceArray2D<int16_t>& dy)
 {
     static bool once = false;
 

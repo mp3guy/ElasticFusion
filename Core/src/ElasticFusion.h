@@ -60,15 +60,15 @@ class ElasticFusion
 
         /**
          * Process an rgb/depth map pair
-         * @param rgb unsigned char row major order
-         * @param depth unsigned short z-depth in millimeters, invalid depths are 0
+         * @param rgb uint8_t row major order
+         * @param depth uint16_t z-depth in millimeters, invalid depths are 0
          * @param timestamp nanoseconds (actually only used for the output poses, not important otherwise)
          * @param inPose optional input SE3 pose (if provided, we don't attempt to perform tracking)
          * @param weightMultiplier optional full frame fusion weight
          * @param bootstrap if true, use inPose as a pose guess rather than replacement
          */
-        void processFrame(const unsigned char * rgb,
-                          const unsigned short * depth,
+        void processFrame(const uint8_t * rgb,
+                          const uint16_t * depth,
                           const int64_t & timestamp,
                           const Eigen::Matrix4f * inPose = 0,
                           const float weightMultiplier = 1.f,
@@ -277,7 +277,7 @@ class ElasticFusion
         void filterDepth();
         void metriciseDepth();
 
-        bool denseEnough(const Img<Eigen::Matrix<unsigned char, 3, 1>> & img);
+        bool denseEnough(const Img<Eigen::Matrix<uint8_t, 3, 1>> & img);
 
         void processFerns();
 
@@ -302,9 +302,9 @@ class ElasticFusion
         std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>> poseGraph;
         std::vector<unsigned long long int> poseLogTimes;
 
-        Img<Eigen::Matrix<unsigned char, 3, 1>> imageBuff;
+        Img<Eigen::Matrix<uint8_t, 3, 1>> imageBuff;
         Img<Eigen::Vector4f> consBuff;
-        Img<unsigned short> timesBuff;
+        Img<uint16_t> timesBuff;
 
         const bool closeLoops;
         const bool iclnuim;

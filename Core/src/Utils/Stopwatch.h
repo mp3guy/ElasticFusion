@@ -36,7 +36,7 @@
 
 #define SEND_INTERVAL_MS 10000
 
-typedef unsigned char stopwatchPacketType;
+typedef uint8_t stopwatchPacketType;
 
 #ifndef DISABLE_STOPWATCH
 #define STOPWATCH(name, expression) \
@@ -183,9 +183,9 @@ class Stopwatch
                 packetSize += it->first.length() + 1 + sizeof(float);
             }
 
-            int * dataPacket = (int *)calloc(packetSize, sizeof(unsigned char));
+            int * dataPacket = (int *)calloc(packetSize, sizeof(uint8_t));
 
-            dataPacket[0] = packetSize * sizeof(unsigned char);
+            dataPacket[0] = packetSize * sizeof(uint8_t);
 
             *((unsigned long long int *)&dataPacket[1]) = signature;
 

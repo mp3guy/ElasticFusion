@@ -43,7 +43,7 @@ class JPEGLoader
         JPEGLoader()
         {}
 
-        void readData(unsigned char * src, const int numBytes, unsigned char * data)
+        void readData(uint8_t * src, const int numBytes, uint8_t * data)
         {
             jpeg_decompress_struct cinfo; // IJG JPEG codec structure
 
@@ -81,12 +81,12 @@ class JPEGLoader
             {
                 jpeg_read_scanlines(&cinfo, buffer, 1);
 
-                unsigned char * bgr = (unsigned char *)buffer[0];
-                unsigned char * rgb = (unsigned char *)data;
+                uint8_t * bgr = (uint8_t *)buffer[0];
+                uint8_t * rgb = (uint8_t *)data;
 
                 for(int i = 0; i < width; i++, bgr += 3, rgb += 3)
                 {
-                    unsigned char t0 = bgr[0], t1 = bgr[1], t2 = bgr[2];
+                    uint8_t t0 = bgr[0], t1 = bgr[1], t2 = bgr[2];
                     rgb[2] = t0; rgb[1] = t1; rgb[0] = t2;
                 }
             }

@@ -41,8 +41,8 @@ class GUI {
 
     pangolin::Params windowParams;
 
-    windowParams.Set("SAMPLE_BUFFERS", 0);
-    windowParams.Set("SAMPLES", 0);
+    windowParams.Set("sample_buffers", 0);
+    windowParams.Set("samples", 0);
 
     pangolin::CreateWindowAndBind("Main", width, height, windowParams);
 

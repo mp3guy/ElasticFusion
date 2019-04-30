@@ -339,11 +339,10 @@ void tranformMaps(
   cudaSafeCall(cudaGetLastError());
 }
 
-__global__ void copyMapsKernel(
+__global__ void copyMapsKernelTex(
     int rows,
     int cols,
-    const float* vmap_src,
-    const float* nmap_src,
+    float* vmaps_tmp,
     PtrStepSz<float> vmap_dst,
     PtrStep<float> nmap_dst) {
   int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -355,69 +354,12 @@ __global__ void copyMapsKernel(
         vdst = make_float3(
             __int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
 
-    vsrc.x = vmap_src[y * cols * 4 + (x * 4) + 0];
-    vsrc.y = vmap_src[y * cols * 4 + (x * 4) + 1];
-    vsrc.z = vmap_src[y * cols * 4 + (x * 4) + 2];
-
-    if (!(vsrc.z == 0)) {
-      vdst = vsrc;
-    }
-
-    vmap_dst.ptr(y)[x] = vdst.x;
-    vmap_dst.ptr(y + rows)[x] = vdst.y;
-    vmap_dst.ptr(y + 2 * rows)[x] = vdst.z;
-
-    // normals
-    float3 nsrc,
-        ndst = make_float3(
-            __int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
-
-    nsrc.x = nmap_src[y * cols * 4 + (x * 4) + 0];
-    nsrc.y = nmap_src[y * cols * 4 + (x * 4) + 1];
-    nsrc.z = nmap_src[y * cols * 4 + (x * 4) + 2];
-
-    if (!(vsrc.z == 0)) {
-      ndst = nsrc;
-    }
-
-    nmap_dst.ptr(y)[x] = ndst.x;
-    nmap_dst.ptr(y + rows)[x] = ndst.y;
-    nmap_dst.ptr(y + 2 * rows)[x] = ndst.z;
-  }
-}
-
-void copyMaps(
-    const DeviceArray<float>& vmap_src,
-    const DeviceArray<float>& nmap_src,
-    DeviceArray2D<float>& vmap_dst,
-    DeviceArray2D<float>& nmap_dst) {
-  int cols = vmap_dst.cols();
-  int rows = vmap_dst.rows() / 3;
-
-  vmap_dst.create(rows * 3, cols);
-  nmap_dst.create(rows * 3, cols);
-
-  dim3 block(32, 8);
-  dim3 grid(1, 1, 1);
-  grid.x = getGridDim(cols, block.x);
-  grid.y = getGridDim(rows, block.y);
-
-  copyMapsKernel<<<grid, block>>>(rows, cols, vmap_src, nmap_src, vmap_dst, nmap_dst);
-  cudaSafeCall(cudaGetLastError());
-}
-
-__global__ void
-copyMapsKernelTex(int rows, int cols, PtrStepSz<float> vmap_dst, PtrStep<float> nmap_dst) {
-  int x = threadIdx.x + blockIdx.x * blockDim.x;
-  int y = threadIdx.y + blockIdx.y * blockDim.y;
-
-  if (x < cols && y < rows) {
-    // vertexes
-    float3 vsrc,
-        vdst = make_float3(
-            __int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
-
     float4 vmap_src = tex2D(float4Tex0, x, y);
+
+    vmaps_tmp[y * cols * 4 + (x * 4) + 0] = vmap_src.x;
+    vmaps_tmp[y * cols * 4 + (x * 4) + 1] = vmap_src.y;
+    vmaps_tmp[y * cols * 4 + (x * 4) + 2] = vmap_src.z;
+    vmaps_tmp[y * cols * 4 + (x * 4) + 3] = vmap_src.w;
 
     vsrc.x = vmap_src.x;
     vsrc.y = vmap_src.y;
@@ -457,6 +399,7 @@ void copyMaps(
     const cudaArray_t& nmap_src,
     const size_t srcWidth,
     const size_t srcHeight,
+    DeviceArray<float>& vmaps_tmp,
     DeviceArray2D<float>& vmap_dst,
     DeviceArray2D<float>& nmap_dst) {
   vmap_dst.create(srcHeight * 3, srcWidth);
@@ -470,7 +413,7 @@ void copyMaps(
   cudaSafeCall(cudaBindTextureToArray(float4Tex0, vmap_src));
   cudaSafeCall(cudaBindTextureToArray(float4Tex1, nmap_src));
 
-  copyMapsKernelTex<<<grid, block>>>(srcHeight, srcWidth, vmap_dst, nmap_dst);
+  copyMapsKernelTex<<<grid, block>>>(srcHeight, srcWidth, vmaps_tmp, vmap_dst, nmap_dst);
   cudaSafeCall(cudaGetLastError());
 
   cudaSafeCall(cudaUnbindTexture(float4Tex0));

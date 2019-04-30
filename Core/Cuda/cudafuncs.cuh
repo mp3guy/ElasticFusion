@@ -141,16 +141,11 @@ void tranformMaps(
     DeviceArray2D<float>& nmap_dst);
 
 void copyMaps(
-    const DeviceArray<float>& vmap_src,
-    const DeviceArray<float>& nmap_src,
-    DeviceArray2D<float>& vmap_dst,
-    DeviceArray2D<float>& nmap_dst);
-
-void copyMaps(
     const cudaArray_t& vmap_src,
     const cudaArray_t& nmap_src,
     const size_t srcWidth,
     const size_t srcHeight,
+    DeviceArray<float>& vmaps_tmp,
     DeviceArray2D<float>& vmap_dst,
     DeviceArray2D<float>& nmap_dst);
 

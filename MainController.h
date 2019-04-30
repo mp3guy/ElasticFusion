@@ -16,8 +16,8 @@
  *
  */
 
-#include <ElasticFusion.h>
-#include <Utils/Parse.h>
+#include "Core/ElasticFusion.h"
+#include "Core/Utils/Parse.h"
 
 #include "Tools/GUI.h"
 #include "Tools/GroundTruthOdometry.h"

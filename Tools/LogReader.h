@@ -22,8 +22,8 @@
 #include <string>
 #include <zlib.h>
 #include <poll.h>
-#include <Utils/Img.h>
-#include <Utils/Resolution.h>
+#include "../Core/Utils/Img.h"
+#include "../Core/Utils/Resolution.h"
 
 #include "JPEGLoader.h"
 

@@ -22,6 +22,8 @@ find_path(OPENNI2_INCLUDE_DIR OpenNI.h
             ${PC_OPENNI_INCLUDE_DIRS}
           PATHS
             "${PROGRAM_FILES}/OpenNI2/Include"
+            "${CMAKE_SOURCE_DIR}/../third-party/OpenNI2/Include"
+            "${CMAKE_SOURCE_DIR}/../../third-party/OpenNI2/Include"
             "${CMAKE_SOURCE_DIR}/../OpenNI2/Include"
             "${CMAKE_SOURCE_DIR}/../../OpenNI2/Include"
             "${CMAKE_SOURCE_DIR}/../../../OpenNI2/Include"

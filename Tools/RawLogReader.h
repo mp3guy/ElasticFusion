@@ -16,68 +16,51 @@
  *
  */
 
-#ifndef LIVELOGREADER_H_
-#define LIVELOGREADER_H_
+#ifndef RAWLOGREADER_H_
+#define RAWLOGREADER_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <poll.h>
-#include <signal.h>
-#include <chrono>
-#include <thread>
-
-#include <Utils/Parse.h>
+#include "../Core/Utils/Resolution.h"
+#include "../Core/Utils/Stopwatch.h"
+#include <pangolin/utils/file_utils.h>
 
 #include "LogReader.h"
-#include "CameraInterface.h"
 
-class LiveLogReader : public LogReader
+#include <cassert>
+#include <zlib.h>
+#include <iostream>
+#include <stdio.h>
+#include <string>
+#include <stack>
+
+class RawLogReader : public LogReader
 {
-	public:
-    enum CameraType
-    {
-      OpenNI2,RealSense
-    };
+    public:
+        RawLogReader(std::string file, bool flipColors);
 
-		LiveLogReader(std::string file, bool flipColors, CameraType type);
-
-		virtual ~LiveLogReader();
+        virtual ~RawLogReader();
 
         void getNext();
+
+        void getBack();
 
         int getNumFrames();
 
         bool hasMore();
 
-        bool rewound()
-        {
-            return false;
-        }
+        bool rewound();
 
-        void rewind()
-        {
+        void rewind();
 
-        }
-
-        void getBack()
-        {
-
-        }
-
-        void fastForward(int frame)
-        {
-
-        }
+        void fastForward(int frame);
 
         const std::string getFile();
 
         void setAuto(bool value);
 
-		CameraInterface * cam;
+        std::stack<int> filePointers;
 
-	private:
-		int64_t lastFrameTime;
-		int lastGot;
+    private:
+        void getCore();
 };
 
-#endif /* LIVELOGREADER_H_ */
+#endif /* RAWLOGREADER_H_ */

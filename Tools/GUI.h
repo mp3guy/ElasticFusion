@@ -23,9 +23,9 @@
 #include <pangolin/gl/gl.h>
 #include <pangolin/gl/gldraw.h>
 #include <map>
-#include <GPUTexture.h>
-#include <Utils/Intrinsics.h>
-#include <Shaders/Shaders.h>
+#include "../Core/GPUTexture.h"
+#include "../Core/Utils/Intrinsics.h"
+#include "../Core/Shaders/Shaders.h"
 
 #define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
 

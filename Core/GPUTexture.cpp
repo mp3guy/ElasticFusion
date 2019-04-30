@@ -30,8 +30,7 @@ GPUTexture::GPUTexture(const int width,
                        const GLenum internalFormat,
                        const GLenum format,
                        const GLenum dataType,
-                       const bool draw,
-                       const bool cuda)
+                       const bool draw)
  : texture(new pangolin::GlTexture(width, height, internalFormat, draw, 0, format, dataType)),
    draw(draw),
    width(width),
@@ -40,14 +39,7 @@ GPUTexture::GPUTexture(const int width,
    format(format),
    dataType(dataType)
 {
-    if(cuda)
-    {
-        cudaGraphicsGLRegisterImage(&cudaRes, texture->tid, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsReadOnly);
-    }
-    else
-    {
-        cudaRes = 0;
-    }
+   cudaGraphicsGLRegisterImage(&cudaRes, texture->tid, GL_TEXTURE_2D, cudaGraphicsRegisterFlagsReadOnly);
 }
 
 GPUTexture::~GPUTexture()

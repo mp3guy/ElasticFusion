@@ -138,6 +138,13 @@ void copyMaps(const DeviceArray<float>& vmap_src,
               DeviceArray2D<float>& vmap_dst,
               DeviceArray2D<float>& nmap_dst);
 
+void copyMaps(const cudaArray_t& vmap_src,
+              const cudaArray_t& nmap_src,
+              const size_t srcWidth,
+              const size_t srcHeight,
+              DeviceArray2D<float>& vmap_dst,
+              DeviceArray2D<float>& nmap_dst);
+
 void resizeVMap(const DeviceArray2D<float>& input,
                 DeviceArray2D<float>& output);
 

@@ -32,8 +32,7 @@ class GPUTexture
                    const GLenum internalFormat,
                    const GLenum format,
                    const GLenum dataType,
-                   const bool draw = false,
-                   const bool cuda = false);
+                   const bool draw);
 
         virtual ~GPUTexture();
 

@@ -163,34 +163,32 @@ void ElasticFusion::createTextures()
                                                GL_RGBA,
                                                GL_RGB,
                                                GL_UNSIGNED_BYTE,
-                                               true,
                                                true);
 
     textures[GPUTexture::DEPTH_RAW] = new GPUTexture(Resolution::getInstance().width(),
                                                      Resolution::getInstance().height(),
                                                      GL_LUMINANCE16UI_EXT,
                                                      GL_LUMINANCE_INTEGER_EXT,
-                                                     GL_UNSIGNED_SHORT);
+                                                     GL_UNSIGNED_SHORT, false);
 
     textures[GPUTexture::DEPTH_FILTERED] = new GPUTexture(Resolution::getInstance().width(),
                                                           Resolution::getInstance().height(),
                                                           GL_LUMINANCE16UI_EXT,
                                                           GL_LUMINANCE_INTEGER_EXT,
                                                           GL_UNSIGNED_SHORT,
-                                                          false,
-                                                          true);
+                                                          false);
 
     textures[GPUTexture::DEPTH_METRIC] = new GPUTexture(Resolution::getInstance().width(),
                                                         Resolution::getInstance().height(),
                                                         GL_LUMINANCE32F_ARB,
                                                         GL_LUMINANCE,
-                                                        GL_FLOAT);
+                                                        GL_FLOAT, false);
 
     textures[GPUTexture::DEPTH_METRIC_FILTERED] = new GPUTexture(Resolution::getInstance().width(),
                                                                  Resolution::getInstance().height(),
                                                                  GL_LUMINANCE32F_ARB,
                                                                  GL_LUMINANCE,
-                                                                 GL_FLOAT);
+                                                                 GL_FLOAT, false);
 
     textures[GPUTexture::DEPTH_NORM] = new GPUTexture(Resolution::getInstance().width(),
                                                       Resolution::getInstance().height(),

@@ -144,19 +144,37 @@ void RGBDOdometry::initICP(GPUTexture * filteredDepth, const float depthCutoff)
 
 void RGBDOdometry::initICP(GPUTexture * predictedVertices, GPUTexture * predictedNormals)
 {
-    cudaArray_t textPtr;
+    if(true)
+    {
+        cudaArray_t textPtr;
 
-    cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
-    cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
-    cudaMemcpyFromArray(vmaps_tmp.ptr(), textPtr, 0, 0, vmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
-    cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
+        cudaMemcpyFromArray(vmaps_tmp.ptr(), textPtr, 0, 0, vmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
+        cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
 
-    cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
-    cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedNormals->cudaRes, 0, 0);
-    cudaMemcpyFromArray(nmaps_tmp.ptr(), textPtr, 0, 0, nmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
-    cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedNormals->cudaRes, 0, 0);
+        cudaMemcpyFromArray(nmaps_tmp.ptr(), textPtr, 0, 0, nmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
+        cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
 
-    copyMaps(vmaps_tmp, nmaps_tmp, vmaps_curr_[0], nmaps_curr_[0]);
+        copyMaps(vmaps_tmp, nmaps_tmp, vmaps_curr_[0], nmaps_curr_[0]);
+    }
+    else
+    {
+        cudaArray_t vmapPtr, nmapPtr;
+
+        cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&vmapPtr, predictedVertices->cudaRes, 0, 0);
+
+        cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&nmapPtr, predictedNormals->cudaRes, 0, 0);
+
+        copyMaps(vmapPtr, nmapPtr, width, height, vmaps_curr_[0], nmaps_curr_[0]);
+
+        cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
+    }
 
     for(int i = 1; i < NUM_PYRS; ++i)
     {
@@ -171,19 +189,37 @@ void RGBDOdometry::initICPModel(GPUTexture * predictedVertices,
                                 GPUTexture * predictedNormals,
                                 const Eigen::Matrix4f & modelPose)
 {
-    cudaArray_t textPtr;
+    if(true)
+    {
+        cudaArray_t textPtr;
 
-    cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
-    cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
-    cudaMemcpyFromArray(vmaps_tmp.ptr(), textPtr, 0, 0, vmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
-    cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedVertices->cudaRes, 0, 0);
+        cudaMemcpyFromArray(vmaps_tmp.ptr(), textPtr, 0, 0, vmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
+        cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
 
-    cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
-    cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedNormals->cudaRes, 0, 0);
-    cudaMemcpyFromArray(nmaps_tmp.ptr(), textPtr, 0, 0, nmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
-    cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&textPtr, predictedNormals->cudaRes, 0, 0);
+        cudaMemcpyFromArray(nmaps_tmp.ptr(), textPtr, 0, 0, nmaps_tmp.sizeBytes(), cudaMemcpyDeviceToDevice);
+        cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
 
-    copyMaps(vmaps_tmp, nmaps_tmp, vmaps_g_prev_[0], nmaps_g_prev_[0]);
+        copyMaps(vmaps_tmp, nmaps_tmp, vmaps_g_prev_[0], nmaps_g_prev_[0]);
+    }
+    else
+    {
+        cudaArray_t vmapPtr, nmapPtr;
+
+        cudaGraphicsMapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&vmapPtr, predictedVertices->cudaRes, 0, 0);
+
+        cudaGraphicsMapResources(1, &predictedNormals->cudaRes);
+        cudaGraphicsSubResourceGetMappedArray(&nmapPtr, predictedNormals->cudaRes, 0, 0);
+
+        copyMaps(vmapPtr, nmapPtr, width, height, vmaps_g_prev_[0], nmaps_g_prev_[0]);
+
+        cudaGraphicsUnmapResources(1, &predictedVertices->cudaRes);
+        cudaGraphicsUnmapResources(1, &predictedNormals->cudaRes);
+    }
 
     for(int i = 1; i < NUM_PYRS; ++i)
     {

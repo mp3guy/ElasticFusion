@@ -55,6 +55,8 @@
 
 texture<uchar4, 2, cudaReadModeElementType> uchar4Tex;
 texture<uint16_t, 2, cudaReadModeElementType> uint16Tex;
+texture<float4, 2, cudaReadModeElementType> float4Tex0;
+texture<float4, 2, cudaReadModeElementType> float4Tex1;
 
 __global__ void pyrDownGaussKernel (const PtrStepSz<uint16_t> src, PtrStepSz<uint16_t> dst, float sigma_color)
 {
@@ -386,6 +388,79 @@ void copyMaps(const DeviceArray<float>& vmap_src,
     grid.y = getGridDim(rows, block.y);
 
     copyMapsKernel<<<grid, block>>>(rows, cols, vmap_src, nmap_src, vmap_dst, nmap_dst);
+    cudaSafeCall(cudaGetLastError());
+}
+
+__global__ void copyMapsKernelTex(int rows, int cols,
+                                  PtrStepSz<float> vmap_dst, PtrStep<float> nmap_dst)
+{
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x < cols && y < rows)
+    {
+        //vertexes
+        float3 vsrc, vdst = make_float3 (__int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
+
+        float4 vmap_src = tex2D(float4Tex0, x, y);
+
+        vsrc.x = vmap_src.x;
+        vsrc.y = vmap_src.y;
+        vsrc.z = vmap_src.z;
+
+        if(!(vsrc.z == 0))
+        {
+            vdst = vsrc;
+        }
+
+        vmap_dst.ptr (y)[x] = vdst.x;
+        vmap_dst.ptr (y + rows)[x] = vdst.y;
+        vmap_dst.ptr (y + 2 * rows)[x] = vdst.z;
+
+        //normals
+        float3 nsrc, ndst = make_float3 (__int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
+
+        float4 nmap_src = tex2D(float4Tex1, x, y);
+
+        nsrc.x = nmap_src.x;
+        nsrc.y = nmap_src.y;
+        nsrc.z = nmap_src.z;
+
+        if(!(vsrc.z == 0))
+        {
+            ndst = nsrc;
+        }
+
+        nmap_dst.ptr (y)[x] = ndst.x;
+        nmap_dst.ptr (y + rows)[x] = ndst.y;
+        nmap_dst.ptr (y + 2 * rows)[x] = ndst.z;
+    }
+}
+
+void copyMaps(const cudaArray_t& vmap_src,
+              const cudaArray_t& nmap_src,
+              const size_t srcWidth,
+              const size_t srcHeight,
+              DeviceArray2D<float>& vmap_dst,
+              DeviceArray2D<float>& nmap_dst)
+{
+    vmap_dst.create(srcHeight * 3, srcWidth);
+    nmap_dst.create(srcHeight * 3, srcWidth);
+
+    dim3 block(32, 8);
+    dim3 grid(1, 1, 1);
+    grid.x = getGridDim(srcWidth, block.x);
+    grid.y = getGridDim(srcHeight, block.y);
+
+    cudaSafeCall(cudaBindTextureToArray(float4Tex0, vmap_src));
+    cudaSafeCall(cudaBindTextureToArray(float4Tex1, nmap_src));
+
+    copyMapsKernelTex<<<grid, block>>>(srcHeight, srcWidth, vmap_dst, nmap_dst);
+    cudaSafeCall(cudaGetLastError());
+
+    cudaSafeCall(cudaUnbindTexture(float4Tex0));
+    cudaSafeCall(cudaUnbindTexture(float4Tex1));
+
     cudaSafeCall(cudaGetLastError());
 }
 

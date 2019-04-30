@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 2.6.0)
 project(ElasticFusion)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
+set(Pangolin_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
+set(OPENNI2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../third-party/OpenNI2/Include" CACHE PATH "OpenNI2 Include directory")
+set(OPENNI2_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/../../third-party/OpenNI2/Bin/x64-Release/libOpenNI2.so" CACHE PATH "OpenNI2 library")
 
 if(WIN32)
   macro(CANONIFY_BOOL var)
@@ -14,13 +17,10 @@ if(WIN32)
   endmacro()
 endif()
 
-if(WIN32)
-  find_package(JPEG REQUIRED)
-endif()
-
 find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(JPEG REQUIRED)
 find_package(Pangolin 0.1 REQUIRED)
 find_package(CUDA REQUIRED)
 find_package(OpenNI2 REQUIRED)
@@ -82,6 +82,7 @@ add_executable(ElasticFusion
 target_link_libraries(ElasticFusion
 					  ${EXTRA_WINDOWS_LIBS}
                       ${ZLIB_LIBRARY}
+                      ${JPEG_LIBRARY}
                       ${Pangolin_LIBRARIES}
                       ${CUDA_LIBRARIES}
                       ${EXTRA_LIBS}

@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.6.0)
 
 project(libefusion)
 
-set(efusion_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Shaders" CACHE PATH "Where the shaders live")
-
 include_directories(${Pangolin_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIRS})
@@ -28,13 +26,9 @@ include("${CMAKE_MODULE_PATH}/CudaComputeTargetFlags.cmake")
 APPEND_TARGET_ARCH_FLAGS()
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;")           
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} "--ftz=true;--prec-div=false;--prec-sqrt=false") 
 
 CUDA_COMPILE(cuda_objs ${cuda})
 
-set(CMAKE_CXX_FLAGS ${ADDITIONAL_CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
-  
 add_library(efusion SHARED 
             ${srcs}
             ${utils_srcs}

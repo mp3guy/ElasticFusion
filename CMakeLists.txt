@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeMod
 set(Pangolin_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
 set(OPENNI2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/OpenNI2/Include" CACHE PATH "OpenNI2 Include directory")
 set(OPENNI2_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/third-party/OpenNI2/Bin/x64-Release/libOpenNI2.so" CACHE PATH "OpenNI2 library")
+set(efusion_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Core/Shaders" CACHE PATH "Where the shaders live")
 
 find_package(LAPACK REQUIRED)
 find_package(BLAS REQUIRED)
@@ -36,8 +37,8 @@ file(GLOB tools_srcs Tools/*.cpp)
 
 add_definitions(-Dlinux=1)
 
-set(CMAKE_CXX_FLAGS ${ADDITIONAL_CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
 
 add_subdirectory(Core)
 

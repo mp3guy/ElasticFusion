@@ -21,9 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef WIN32
-#  include <poll.h>
-#endif
+#include <poll.h>
 #include <signal.h>
 #include <chrono>
 #include <thread>

@@ -30,8 +30,6 @@
 #include <pangolin/gl/gl.h>
 #include <Eigen/LU>
 
-#include "Defines.h"
-
 class GlobalModel
 {
     public:
@@ -46,7 +44,7 @@ class GlobalModel
         static const int NODE_TEXTURE_DIMENSION;
         static const int MAX_NODES;
 
-        EFUSION_API void renderPointCloud(pangolin::OpenGlMatrix mvp,
+        void renderPointCloud(pangolin::OpenGlMatrix mvp,
                               const float threshold,
                               const bool drawUnstable,
                               const bool drawNormals,
@@ -57,7 +55,7 @@ class GlobalModel
                               const int time,
                               const int timeDelta);
 
-        EFUSION_API const std::pair<GLuint, GLuint> & model();
+        const std::pair<GLuint, GLuint> & model();
 
         void fuse(const Eigen::Matrix4f & pose,
                   const int & time,
@@ -85,7 +83,7 @@ class GlobalModel
                    const float maxDepth,
                    const bool isFern);
 
-        EFUSION_API unsigned int lastCount();
+        unsigned int lastCount();
 
         Eigen::Vector4f * downloadMap();
 

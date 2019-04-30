@@ -18,21 +18,12 @@
 #ifndef PARSE_H_
 #define PARSE_H_
 
-#ifdef WIN32
-#  include <Windows.h>
-#else
-#  include <dirent.h>
-#endif
-
+#include <dirent.h>
 #include <string>
 #include <cassert>
-#ifndef WIN32
-#  include <unistd.h>
-#endif
+#include <unistd.h>
 #include <string.h>
 #include <pangolin/utils/file_utils.h>
-
-#include "../Defines.h"
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -40,22 +31,22 @@
 class Parse
 {
     public:
-        EFUSION_API static const Parse & get();
+        static const Parse & get();
 
-        EFUSION_API int arg(int argc, char** argv, const char* str, std::string &val) const;
+        int arg(int argc, char** argv, const char* str, std::string &val) const;
 
-        EFUSION_API int arg(int argc, char** argv, const char* str, float &val) const;
+        int arg(int argc, char** argv, const char* str, float &val) const;
 
-        EFUSION_API int arg(int argc, char** argv, const char* str, int &val) const;
+        int arg(int argc, char** argv, const char* str, int &val) const;
 
-        EFUSION_API std::string shaderDir() const;
+        std::string shaderDir() const;
 
-        EFUSION_API std::string baseDir() const;
+        std::string baseDir() const;
 
     private:
-        EFUSION_API Parse();
+        Parse();
 
-        EFUSION_API int findArg(int argc,char** argv,const char* argument_name) const;
+        int findArg(int argc,char** argv,const char* argument_name) const;
 };
 
 #endif /* PARSE_H_ */

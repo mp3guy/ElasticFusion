@@ -27,8 +27,6 @@
 #include <pangolin/gl/gl.h>
 #include <pangolin/display/opengl_render_state.h>
 
-#include "../Defines.h"
-
 class FeedbackBuffer
 {
     public:
@@ -42,9 +40,9 @@ class FeedbackBuffer
                      const int & time,
                      const float depthCutoff);
 
-        EFUSION_API void render(pangolin::OpenGlMatrix mvp, const Eigen::Matrix4f & pose, const bool drawNormals, const bool drawColors);
+        void render(pangolin::OpenGlMatrix mvp, const Eigen::Matrix4f & pose, const bool drawNormals, const bool drawColors);
 
-        EFUSION_API static const std::string RAW, FILTERED;
+        static const std::string RAW, FILTERED;
 
         GLuint vbo;
         GLuint fid;

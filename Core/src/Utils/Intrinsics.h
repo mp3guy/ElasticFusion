@@ -21,12 +21,10 @@
 
 #include <cassert>
 
-#include "../Defines.h"
-
 class Intrinsics
 {
     public:
-        EFUSION_API static const Intrinsics & getInstance(float fx = 0,float fy = 0,float cx = 0,float cy = 0);
+        static const Intrinsics & getInstance(float fx = 0,float fy = 0,float cx = 0,float cy = 0);
 
         const float & fx() const
         {

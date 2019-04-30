@@ -25,12 +25,11 @@
 #include "../Utils/Intrinsics.h"
 #include "../GPUTexture.h"
 #include "../Utils/Img.h"
-#include "../Defines.h"
 
 class Resize
 {
     public:
-        EFUSION_API Resize(int srcWidth,
+        Resize(int srcWidth,
                int srcHeight,
                int destWidth,
                int destHeight);

@@ -22,38 +22,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef WIN32
-#  define far
-#  include <Windows.h>
-#  include <WinSock2.h>
-#  include <stdint.h> // portable: uint64_t   MSVC: __int64 
-#  include <time.h>
-#  include "WindowsExtras.h"
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-#  include <arpa/inet.h>
-#endif
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <map>
-#ifndef WIN32
-#  include <sys/time.h>
-#  include <unistd.h>
-#endif
-
-#include "../Defines.h"
+#include <sys/time.h>
+#include <unistd.h>
 
 #define SEND_INTERVAL_MS 10000
 
-#ifdef WIN32
-typedef char stopwatchPacketType;
-#else
 typedef unsigned char stopwatchPacketType;
-#endif
 
 #ifndef DISABLE_STOPWATCH
 #define STOPWATCH(name, expression) \
@@ -188,11 +171,7 @@ class Stopwatch
 
         virtual ~Stopwatch()
         {
-#ifdef WIN32
-            closesocket(sockfd);
-#else
             close(sockfd);
-#endif
         }
 
         stopwatchPacketType * serialiseTimings(int & packetSize)

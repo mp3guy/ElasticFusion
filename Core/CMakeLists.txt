@@ -25,7 +25,7 @@ endforeach(NVCC_ARCH)
 include("${CMAKE_MODULE_PATH}/CudaComputeTargetFlags.cmake")
 APPEND_TARGET_ARCH_FLAGS()
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;")           
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;--expt-relaxed-constexpr")
 
 CUDA_COMPILE(cuda_objs ${cuda})
 

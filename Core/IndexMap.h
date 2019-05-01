@@ -21,6 +21,7 @@
 #define INDEXMAP_H_
 
 #include <pangolin/gl/gl.h>
+#include <sophus/se3.hpp>
 #include <Eigen/LU>
 #include "GPUTexture.h"
 #include "Shaders/Shaders.h"
@@ -35,7 +36,7 @@ class IndexMap {
   virtual ~IndexMap();
 
   void predictIndices(
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       const int& time,
       const std::pair<GLuint, GLuint>& model,
       const float depthCutoff,
@@ -46,7 +47,7 @@ class IndexMap {
   enum Prediction { ACTIVE, INACTIVE };
 
   void combinedPredict(
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       const std::pair<GLuint, GLuint>& model,
       const float depthCutoff,
       const float confThreshold,
@@ -62,7 +63,7 @@ class IndexMap {
       const float confThreshold);
 
   void synthesizeDepth(
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       const std::pair<GLuint, GLuint>& model,
       const float depthCutoff,
       const float confThreshold,

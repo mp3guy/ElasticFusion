@@ -58,7 +58,7 @@ class GlobalModel {
   const std::pair<GLuint, GLuint>& model();
 
   void fuse(
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       const int& time,
       GPUTexture* rgb,
       GPUTexture* depthRaw,
@@ -68,11 +68,10 @@ class GlobalModel {
       GPUTexture* colorTimeMap,
       GPUTexture* normRadMap,
       const float depthCutoff,
-      const float confThreshold,
       const float weighting);
 
   void clean(
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       const int& time,
       GPUTexture* indexMap,
       GPUTexture* vertConfMap,

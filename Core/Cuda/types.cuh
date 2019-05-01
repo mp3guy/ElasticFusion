@@ -59,6 +59,11 @@
 #include <Eigen/Core>
 #endif
 
+#define MAX_THREADS 1024
+
+constexpr int reduceThreads = 256;
+constexpr int reduceBlocks = 64;
+
 struct mat33 {
   mat33() {}
 

@@ -41,8 +41,8 @@ typedef uint8_t stopwatchPacketType;
 #ifndef DISABLE_STOPWATCH
 #define STOPWATCH(name, expression)                                                           \
   do {                                                                                        \
-    const unsigned long long int startTime = Stopwatch::getInstance().getCurrentSystemTime(); \
-    expression const unsigned long long int endTime =                                         \
+    const uint64_t startTime = Stopwatch::getInstance().getCurrentSystemTime(); \
+    expression const uint64_t endTime =                                         \
         Stopwatch::getInstance().getCurrentSystemTime();                                      \
     Stopwatch::getInstance().addStopwatchTiming(name, endTime - startTime);                   \
   } while (false)
@@ -72,13 +72,13 @@ class Stopwatch {
     return instance;
   }
 
-  void addStopwatchTiming(std::string name, unsigned long long int duration) {
+  void addStopwatchTiming(std::string name, uint64_t duration) {
     if (duration > 0) {
       timings[name] = (float)(duration) / 1000.0f;
     }
   }
 
-  void setCustomSignature(unsigned long long int newSignature) {
+  void setCustomSignature(uint64_t newSignature) {
     signature = newSignature;
   }
 
@@ -113,18 +113,18 @@ class Stopwatch {
     }
   }
 
-  static unsigned long long int getCurrentSystemTime() {
+  static uint64_t getCurrentSystemTime() {
     timeval tv;
     gettimeofday(&tv, 0);
-    unsigned long long int time = (unsigned long long int)(tv.tv_sec * 1000000 + tv.tv_usec);
+    uint64_t time = (uint64_t)(tv.tv_sec * 1000000 + tv.tv_usec);
     return time;
   }
 
-  void tick(std::string name, unsigned long long int start) {
+  void tick(std::string name, uint64_t start) {
     tickTimings[name] = start;
   }
 
-  void tock(std::string name, unsigned long long int end) {
+  void tock(std::string name, uint64_t end) {
     float duration = (float)(end - tickTimings[name]) / 1000.0f;
 
     if (duration > 0) {
@@ -152,7 +152,7 @@ class Stopwatch {
   }
 
   stopwatchPacketType* serialiseTimings(int& packetSize) {
-    packetSize = sizeof(int) + sizeof(unsigned long long int);
+    packetSize = sizeof(int) + sizeof(uint64_t);
 
     for (std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end();
          it++) {
@@ -163,9 +163,9 @@ class Stopwatch {
 
     dataPacket[0] = packetSize * sizeof(uint8_t);
 
-    *((unsigned long long int*)&dataPacket[1]) = signature;
+    *((uint64_t*)&dataPacket[1]) = signature;
 
-    float* valuePointer = (float*)&((unsigned long long int*)&dataPacket[1])[1];
+    float* valuePointer = (float*)&((uint64_t*)&dataPacket[1])[1];
 
     for (std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end();
          it++) {
@@ -178,11 +178,11 @@ class Stopwatch {
 
   timeval clock;
   long long int currentSend, lastSend;
-  unsigned long long int signature;
+  uint64_t signature;
   int sockfd;
   struct sockaddr_in servaddr;
   std::map<std::string, float> timings;
-  std::map<std::string, unsigned long long int> tickTimings;
+  std::map<std::string, uint64_t> tickTimings;
 };
 
 #endif /* STOPWATCH_H_ */

@@ -20,14 +20,14 @@
 #include "DeformationGraph.h"
 #include "CholeskyDecomp.h"
 
-DeformationGraph::DeformationGraph(int k, std::vector<Eigen::Vector3f>* sourceVertices)
+DeformationGraph::DeformationGraph(int k, std::vector<Eigen::Vector3d>* sourceVertices)
     : k(k),
       initialised(false),
       wRot(1),
       wReg(10),
       wCon(100),
       sourceVertices(sourceVertices),
-      graphCloud(new std::vector<Eigen::Vector3f>),
+      graphCloud(new std::vector<Eigen::Vector3d>),
       lastPointCount(0),
       cholesky(new CholeskyDecomp) {}
 
@@ -45,13 +45,13 @@ std::vector<GraphNode*>& DeformationGraph::getGraph() {
   return graph;
 }
 
-std::vector<unsigned long long int>& DeformationGraph::getGraphTimes() {
+std::vector<uint64_t>& DeformationGraph::getGraphTimes() {
   return sampledGraphTimes;
 }
 
 void DeformationGraph::initialiseGraph(
-    std::vector<Eigen::Vector3f>* customGraph,
-    std::vector<unsigned long long int>* graphTimeMap) {
+    std::vector<Eigen::Vector3d>* customGraph,
+    std::vector<uint64_t>* graphTimeMap) {
   graphCloud->clear();
 
   sampledGraphTimes.clear();
@@ -73,7 +73,7 @@ void DeformationGraph::initialiseGraph(
 
     graphNodes[i].position = graphCloud->at(i);
 
-    graphNodes[i].translation = Eigen::Vector3f::Zero();
+    graphNodes[i].translation = Eigen::Vector3d::Zero();
 
     graphNodes[i].rotation.setIdentity();
 
@@ -86,7 +86,7 @@ void DeformationGraph::initialiseGraph(
 }
 
 void DeformationGraph::appendVertices(
-    std::vector<unsigned long long int>* vertexTimeMap,
+    std::vector<uint64_t>* vertexTimeMap,
     uint32_t originalPointEnd) {
   vertexMap.resize(lastPointCount);
 
@@ -95,48 +95,45 @@ void DeformationGraph::appendVertices(
   lastPointCount = originalPointEnd;
 }
 
-void DeformationGraph::applyGraphToPoses(std::vector<Eigen::Matrix4f*>& poses) {
-  assert(poses.size() == poseMap.size() && initialised);
+void DeformationGraph::applyGraphToPoses(std::vector<Sophus::SE3d*> T_wc_ptrs) {
+  assert(T_wc_ptrs.size() == poseMap.size() && initialised);
 
-  Eigen::Vector3f newPosition;
-  Eigen::Matrix3f rotation;
+  Eigen::Vector3d newPosition;
+  Eigen::Matrix3d rotation;
 
-  for (size_t i = 0; i < poses.size(); i++) {
+  for (size_t i = 0; i < T_wc_ptrs.size(); i++) {
     std::vector<VertexWeightMap>& weightMap = poseMap.at(i);
 
-    newPosition = Eigen::Vector3f::Zero();
-    rotation = Eigen::Matrix3f::Zero();
+    newPosition = Eigen::Vector3d::Zero();
+    rotation = Eigen::Matrix3d::Zero();
 
     for (size_t j = 0; j < weightMap.size(); j++) {
       newPosition += weightMap.at(j).weight *
           (graph.at(weightMap.at(j).node)->rotation *
-               (poses.at(i)->topRightCorner(3, 1) - graph.at(weightMap.at(j).node)->position) +
+               (T_wc_ptrs.at(i)->translation() - graph.at(weightMap.at(j).node)->position) +
            graph.at(weightMap.at(j).node)->position + graph.at(weightMap.at(j).node)->translation);
 
       rotation += weightMap.at(j).weight * graph.at(weightMap.at(j).node)->rotation;
     }
 
-    Eigen::Matrix3f newRotation = rotation * poses.at(i)->topLeftCorner(3, 3);
+    Eigen::Matrix3d newRotation = rotation * T_wc_ptrs.at(i)->rotationMatrix();
 
-    Eigen::JacobiSVD<Eigen::Matrix3f> svd(newRotation, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(newRotation, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-    poses.at(i)->topRightCorner(3, 1) = newPosition;
-    poses.at(i)->topLeftCorner(3, 3) = svd.matrixU() * svd.matrixV().transpose();
+    T_wc_ptrs.at(i)->translation() = newPosition;
+    T_wc_ptrs.at(i)->rotationMatrix() = svd.matrixU() * svd.matrixV().transpose();
   }
 }
 
 void DeformationGraph::setPosesSeq(
-    std::vector<unsigned long long int>* poseTimeMap,
-    const std::vector<Eigen::Matrix4f>& poses) {
+    std::vector<uint64_t>* poseTimeMap,
+    const std::vector<Sophus::SE3d>& T_wcs) {
   poseMap.clear();
 
   const uint32_t lookBack = 20;
 
-  std::vector<int> pointIdxNKNSearch(k + 1);
-  std::vector<float> pointNKNSquaredDistance(k + 1);
-
-  for (uint32_t i = 0; i < poses.size(); i++) {
-    unsigned long long int poseTime = poseTimeMap->at(i);
+  for (uint32_t i = 0; i < T_wcs.size(); i++) {
+    uint64_t poseTime = poseTimeMap->at(i);
 
     uint32_t foundIndex = 0;
 
@@ -182,7 +179,7 @@ void DeformationGraph::setPosesSeq(
     uint32_t distanceBack = 0;
     for (int j = (int)foundIndex; j >= 0; j--) {
       std::pair<float, int> newNode;
-      newNode.first = (graphCloud->at(j) - poses.at(i).topRightCorner(3, 1)).norm();
+      newNode.first = (graphCloud->at(j) - T_wcs.at(i).translation()).norm();
       newNode.second = j;
 
       nearNodes.push_back(newNode);
@@ -195,7 +192,7 @@ void DeformationGraph::setPosesSeq(
     if (distanceBack != lookBack) {
       for (uint32_t j = foundIndex + 1; j < sampledGraphTimes.size(); j++) {
         std::pair<float, int> newNode;
-        newNode.first = (graphCloud->at(j) - poses.at(i).topRightCorner(3, 1)).norm();
+        newNode.first = (graphCloud->at(j) - T_wcs.at(i).translation()).norm();
         newNode.second = j;
 
         nearNodes.push_back(newNode);
@@ -213,7 +210,7 @@ void DeformationGraph::setPosesSeq(
           return left.first < right.first;
         });
 
-    Eigen::Vector3f vertexPosition = poses.at(i).topRightCorner(3, 1);
+    Eigen::Vector3d vertexPosition = T_wcs.at(i).translation();
     double dMax = nearNodes.at(k).first;
 
     std::vector<VertexWeightMap> newMap;
@@ -222,8 +219,9 @@ void DeformationGraph::setPosesSeq(
 
     for (uint32_t j = 0; j < (uint32_t)k; j++) {
       newMap.push_back(VertexWeightMap(
-          pow(1.0f - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax,
-              2),
+          std::pow(
+              1.0 - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax,
+              2.0),
           nearNodes.at(j).second));
       weightSum += newMap.back().weight;
     }
@@ -267,14 +265,11 @@ void DeformationGraph::connectGraphSeq() {
   }
 }
 
-void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int>* vertexTimeMap) {
+void DeformationGraph::weightVerticesSeq(std::vector<uint64_t>* vertexTimeMap) {
   const uint32_t lookBack = 20;
 
-  std::vector<int> pointIdxNKNSearch(k + 1);
-  std::vector<float> pointNKNSquaredDistance(k + 1);
-
   for (uint32_t i = lastPointCount; i < sourceVertices->size(); i++) {
-    unsigned long long int vertexTime = vertexTimeMap->at(i);
+    uint64_t vertexTime = vertexTimeMap->at(i);
 
     uint32_t foundIndex = 0;
 
@@ -351,7 +346,7 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int>* ve
           return left.first < right.first;
         });
 
-    Eigen::Vector3f vertexPosition = sourceVertices->at(i);
+    Eigen::Vector3d vertexPosition = sourceVertices->at(i);
     double dMax = nearNodes.at(k).first;
 
     std::vector<VertexWeightMap> newMap;
@@ -360,8 +355,9 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int>* ve
 
     for (uint32_t j = 0; j < (uint32_t)k; j++) {
       newMap.push_back(VertexWeightMap(
-          pow(1.0f - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax,
-              2),
+          std::pow(
+              1.0 - (vertexPosition - graphNodes[nearNodes.at(j).second].position).norm() / dMax,
+              2.0),
           nearNodes.at(j).second));
       weightSum += newMap.back().weight;
     }
@@ -377,7 +373,7 @@ void DeformationGraph::weightVerticesSeq(std::vector<unsigned long long int>* ve
 }
 
 void DeformationGraph::applyGraphToVertices() {
-  Eigen::Vector3f position;
+  Eigen::Vector3d position;
 
   for (uint32_t i = 0; i < sourceVertices->size(); i++) {
     computeVertexPosition(i, position);
@@ -385,7 +381,7 @@ void DeformationGraph::applyGraphToVertices() {
   }
 }
 
-void DeformationGraph::addConstraint(int vertexId, Eigen::Vector3f& target) {
+void DeformationGraph::addConstraint(int vertexId, Eigen::Vector3d& target) {
   assert(initialised);
 
   // Overwrites old constraint
@@ -421,7 +417,7 @@ bool DeformationGraph::optimiseGraphSparse(
     float& error,
     float& meanConsErr,
     const bool fernMatch,
-    const unsigned long long int lastDeformTime) {
+    const uint64_t lastDeformTime) {
   assert(initialised);
 
   TICK("opt");
@@ -510,7 +506,7 @@ void DeformationGraph::sparseJacobian(
       int colOffset = graph.at(j)->id * numVariables;
 
       // No weights for rotation as rotation weight = 1
-      const Eigen::Matrix3f& rotation = graph.at(j)->rotation;
+      const Eigen::Matrix3d& rotation = graph.at(j)->rotation;
 
       rows[lastRow] = new OrderedJacobianRow(6);
       rows[lastRow + 1] = new OrderedJacobianRow(6);
@@ -566,7 +562,7 @@ void DeformationGraph::sparseJacobian(
         rows[lastRow + 1] = new OrderedJacobianRow(5);
         rows[lastRow + 2] = new OrderedJacobianRow(5);
 
-        Eigen::Vector3f delta =
+        Eigen::Vector3d delta =
             graph.at(graph.at(j)->neighbours.at(n))->position - graph.at(j)->position;
 
         int colOffsetN = graph.at(graph.at(j)->neighbours.at(n))->id * numVariables;
@@ -574,32 +570,32 @@ void DeformationGraph::sparseJacobian(
         assert(colOffset != colOffsetN);
 
         if (colOffsetN < colOffset && graph.at(graph.at(j)->neighbours.at(n))->enabled) {
-          rows[lastRow]->append(colOffsetN + 9 - backSet, -1.0 * sqrt(wReg));
-          rows[lastRow + 1]->append(colOffsetN + 10 - backSet, -1.0 * sqrt(wReg));
-          rows[lastRow + 2]->append(colOffsetN + 11 - backSet, -1.0 * sqrt(wReg));
+          rows[lastRow]->append(colOffsetN + 9 - backSet, -1.0 * std::sqrt(wReg));
+          rows[lastRow + 1]->append(colOffsetN + 10 - backSet, -1.0 * std::sqrt(wReg));
+          rows[lastRow + 2]->append(colOffsetN + 11 - backSet, -1.0 * std::sqrt(wReg));
         }
 
         if (graph.at(j)->enabled) {
-          rows[lastRow]->append(colOffset - backSet, delta(0) * sqrt(wReg));
-          rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * sqrt(wReg));
-          rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * sqrt(wReg));
-          rows[lastRow]->append(colOffset + 9 - backSet, 1.0 * sqrt(wReg));
+          rows[lastRow]->append(colOffset - backSet, delta(0) * std::sqrt(wReg));
+          rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * std::sqrt(wReg));
+          rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * std::sqrt(wReg));
+          rows[lastRow]->append(colOffset + 9 - backSet, 1.0 * std::sqrt(wReg));
 
-          rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * sqrt(wReg));
-          rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * sqrt(wReg));
-          rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * sqrt(wReg));
-          rows[lastRow + 1]->append(colOffset + 10 - backSet, 1.0 * sqrt(wReg));
+          rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * std::sqrt(wReg));
+          rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * std::sqrt(wReg));
+          rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * std::sqrt(wReg));
+          rows[lastRow + 1]->append(colOffset + 10 - backSet, 1.0 * std::sqrt(wReg));
 
-          rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * sqrt(wReg));
-          rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * sqrt(wReg));
-          rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * sqrt(wReg));
-          rows[lastRow + 2]->append(colOffset + 11 - backSet, 1.0 * sqrt(wReg));
+          rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * std::sqrt(wReg));
+          rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * std::sqrt(wReg));
+          rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * std::sqrt(wReg));
+          rows[lastRow + 2]->append(colOffset + 11 - backSet, 1.0 * std::sqrt(wReg));
         }
 
         if (colOffsetN > colOffset && graph.at(graph.at(j)->neighbours.at(n))->enabled) {
-          rows[lastRow]->append(colOffsetN + 9 - backSet, -1.0 * sqrt(wReg));
-          rows[lastRow + 1]->append(colOffsetN + 10 - backSet, -1.0 * sqrt(wReg));
-          rows[lastRow + 2]->append(colOffsetN + 11 - backSet, -1.0 * sqrt(wReg));
+          rows[lastRow]->append(colOffsetN + 9 - backSet, -1.0 * std::sqrt(wReg));
+          rows[lastRow + 1]->append(colOffsetN + 10 - backSet, -1.0 * std::sqrt(wReg));
+          rows[lastRow + 2]->append(colOffsetN + 11 - backSet, -1.0 * std::sqrt(wReg));
         }
 
         lastRow += eRegRows;
@@ -631,7 +627,7 @@ void DeformationGraph::sparseJacobian(
     }
 
     if (nodeInfluences) {
-      Eigen::Vector3f sourcePosition = sourceVertices->at(constraints.at(l).vertexId);
+      Eigen::Vector3d sourcePosition = sourceVertices->at(constraints.at(l).vertexId);
 
       rows[lastRow] = new OrderedJacobianRow(4 * k * 2);
       rows[lastRow + 1] = new OrderedJacobianRow(4 * k * 2);
@@ -640,7 +636,7 @@ void DeformationGraph::sparseJacobian(
       assert(graph.at(weightMap.at(0).node)->id < graph.at(weightMap.at(1).node)->id);
 
       if (constraints.at(l).relative) {
-        Eigen::Vector3f targetPosition = sourceVertices->at(constraints.at(l).targetId);
+        Eigen::Vector3d targetPosition = sourceVertices->at(constraints.at(l).targetId);
 
         std::vector<VertexWeightMap>& relWeightMap = vertexMap.at(constraints.at(l).targetId);
 
@@ -662,90 +658,90 @@ void DeformationGraph::sparseJacobian(
             int colOffset = graph.at(weightMapMixed.at(i).node)->id * numVariables;
 
             if (weightMapMixed.at(i).relative) {
-              Eigen::Vector3f delta =
+              Eigen::Vector3d delta =
                   (graph.at(weightMapMixed.at(i).node)->position - targetPosition) *
                   weightMapMixed.at(i).weight;
 
               // We have to sum the Jacobian entries in this case
               if (checkList[graph.at(weightMapMixed.at(i).node)->id]) {
-                rows[lastRow]->addTo(colOffset - backSet, delta(0), sqrt(wCon));
-                rows[lastRow]->addTo(colOffset + 3 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow]->addTo(colOffset + 6 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow]->addTo(colOffset - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow]->addTo(colOffset + 3 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow]->addTo(colOffset + 6 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow]->addTo(
-                    colOffset + 9 - backSet, -weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 9 - backSet, -weightMapMixed.at(i).weight, std::sqrt(wCon));
 
-                rows[lastRow + 1]->addTo(colOffset + 1 - backSet, delta(0), sqrt(wCon));
-                rows[lastRow + 1]->addTo(colOffset + 4 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow + 1]->addTo(colOffset + 7 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 1 - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 4 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 7 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow + 1]->addTo(
-                    colOffset + 10 - backSet, -weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 10 - backSet, -weightMapMixed.at(i).weight, std::sqrt(wCon));
 
-                rows[lastRow + 2]->addTo(colOffset + 2 - backSet, delta(0), sqrt(wCon));
-                rows[lastRow + 2]->addTo(colOffset + 5 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow + 2]->addTo(colOffset + 8 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 2 - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 5 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 8 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow + 2]->addTo(
-                    colOffset + 11 - backSet, -weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 11 - backSet, -weightMapMixed.at(i).weight, std::sqrt(wCon));
               } else {
-                rows[lastRow]->append(colOffset - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow]->append(colOffset - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow]->append(
-                    colOffset + 9 - backSet, -weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 9 - backSet, -weightMapMixed.at(i).weight * std::sqrt(wCon));
 
-                rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow + 1]->append(
-                    colOffset + 10 - backSet, -weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 10 - backSet, -weightMapMixed.at(i).weight * std::sqrt(wCon));
 
-                rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow + 2]->append(
-                    colOffset + 11 - backSet, -weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 11 - backSet, -weightMapMixed.at(i).weight * std::sqrt(wCon));
               }
             } else {
-              Eigen::Vector3f delta =
+              Eigen::Vector3d delta =
                   (sourcePosition - graph.at(weightMapMixed.at(i).node)->position) *
                   weightMapMixed.at(i).weight;
 
               // We have to sum the Jacobian entries in this case
               if (checkList[graph.at(weightMapMixed.at(i).node)->id]) {
-                rows[lastRow]->addTo(colOffset - backSet, delta(0), sqrt(wCon));
-                rows[lastRow]->addTo(colOffset + 3 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow]->addTo(colOffset + 6 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow]->addTo(colOffset - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow]->addTo(colOffset + 3 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow]->addTo(colOffset + 6 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow]->addTo(
-                    colOffset + 9 - backSet, weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 9 - backSet, weightMapMixed.at(i).weight, std::sqrt(wCon));
 
-                rows[lastRow + 1]->addTo(colOffset + 1 - backSet, delta(0), sqrt(wCon));
-                rows[lastRow + 1]->addTo(colOffset + 4 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow + 1]->addTo(colOffset + 7 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 1 - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 4 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow + 1]->addTo(colOffset + 7 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow + 1]->addTo(
-                    colOffset + 10 - backSet, weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 10 - backSet, weightMapMixed.at(i).weight, std::sqrt(wCon));
 
-                rows[lastRow + 2]->addTo(colOffset + 2 - backSet, delta(0), sqrt(wCon));
-                rows[lastRow + 2]->addTo(colOffset + 5 - backSet, delta(1), sqrt(wCon));
-                rows[lastRow + 2]->addTo(colOffset + 8 - backSet, delta(2), sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 2 - backSet, delta(0), std::sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 5 - backSet, delta(1), std::sqrt(wCon));
+                rows[lastRow + 2]->addTo(colOffset + 8 - backSet, delta(2), std::sqrt(wCon));
                 rows[lastRow + 2]->addTo(
-                    colOffset + 11 - backSet, weightMapMixed.at(i).weight, sqrt(wCon));
+                    colOffset + 11 - backSet, weightMapMixed.at(i).weight, std::sqrt(wCon));
               } else {
-                rows[lastRow]->append(colOffset - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow]->append(colOffset - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow]->append(
-                    colOffset + 9 - backSet, weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 9 - backSet, weightMapMixed.at(i).weight * std::sqrt(wCon));
 
-                rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow + 1]->append(
-                    colOffset + 10 - backSet, weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 10 - backSet, weightMapMixed.at(i).weight * std::sqrt(wCon));
 
-                rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * sqrt(wCon));
-                rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * sqrt(wCon));
-                rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * std::sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * std::sqrt(wCon));
+                rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * std::sqrt(wCon));
                 rows[lastRow + 2]->append(
-                    colOffset + 11 - backSet, weightMapMixed.at(i).weight * sqrt(wCon));
+                    colOffset + 11 - backSet, weightMapMixed.at(i).weight * std::sqrt(wCon));
               }
             }
 
@@ -759,25 +755,26 @@ void DeformationGraph::sparseJacobian(
           if (graph.at(weightMap.at(i).node)->enabled) {
             int colOffset = graph.at(weightMap.at(i).node)->id * numVariables;
 
-            Eigen::Vector3f delta = (sourcePosition - graph.at(weightMap.at(i).node)->position) *
+            Eigen::Vector3d delta = (sourcePosition - graph.at(weightMap.at(i).node)->position) *
                 weightMap.at(i).weight;
 
-            rows[lastRow]->append(colOffset - backSet, delta(0) * sqrt(wCon));
-            rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * sqrt(wCon));
-            rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * sqrt(wCon));
-            rows[lastRow]->append(colOffset + 9 - backSet, weightMap.at(i).weight * sqrt(wCon));
+            rows[lastRow]->append(colOffset - backSet, delta(0) * std::sqrt(wCon));
+            rows[lastRow]->append(colOffset + 3 - backSet, delta(1) * std::sqrt(wCon));
+            rows[lastRow]->append(colOffset + 6 - backSet, delta(2) * std::sqrt(wCon));
+            rows[lastRow]->append(
+                colOffset + 9 - backSet, weightMap.at(i).weight * std::sqrt(wCon));
 
-            rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * sqrt(wCon));
-            rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * sqrt(wCon));
-            rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * sqrt(wCon));
+            rows[lastRow + 1]->append(colOffset + 1 - backSet, delta(0) * std::sqrt(wCon));
+            rows[lastRow + 1]->append(colOffset + 4 - backSet, delta(1) * std::sqrt(wCon));
+            rows[lastRow + 1]->append(colOffset + 7 - backSet, delta(2) * std::sqrt(wCon));
             rows[lastRow + 1]->append(
-                colOffset + 10 - backSet, weightMap.at(i).weight * sqrt(wCon));
+                colOffset + 10 - backSet, weightMap.at(i).weight * std::sqrt(wCon));
 
-            rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * sqrt(wCon));
-            rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * sqrt(wCon));
-            rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * sqrt(wCon));
+            rows[lastRow + 2]->append(colOffset + 2 - backSet, delta(0) * std::sqrt(wCon));
+            rows[lastRow + 2]->append(colOffset + 5 - backSet, delta(1) * std::sqrt(wCon));
+            rows[lastRow + 2]->append(colOffset + 8 - backSet, delta(2) * std::sqrt(wCon));
             rows[lastRow + 2]->append(
-                colOffset + 11 - backSet, weightMap.at(i).weight * sqrt(wCon));
+                colOffset + 11 - backSet, weightMap.at(i).weight * std::sqrt(wCon));
           }
         }
       }
@@ -800,7 +797,7 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows) {
   for (uint32_t j = 0; j < graph.size(); j++) {
     if (graph.at(j)->enabled) {
       // No weights for rotation as rotation weight = 1
-      const Eigen::Matrix3f& rotation = graph.at(j)->rotation;
+      const Eigen::Matrix3d& rotation = graph.at(j)->rotation;
 
       // ab + de + gh
       residual(numRows) = rotation.col(0).dot(rotation.col(1));
@@ -832,9 +829,8 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows) {
                  (graph.at(graph.at(j)->neighbours.at(n))->position - graph.at(j)->position) +
              graph.at(j)->position + graph.at(j)->translation -
              (graph.at(graph.at(j)->neighbours.at(n))->position +
-              graph.at(graph.at(j)->neighbours.at(n))->translation))
-                .cast<double>() *
-            sqrt(wReg);
+              graph.at(graph.at(j)->neighbours.at(n))->translation)) *
+            std::sqrt(wReg);
         numRows += eRegRows;
       }
     }
@@ -865,20 +861,20 @@ Eigen::VectorXd DeformationGraph::sparseResidual(const int maxRows) {
 
     if (nodeInfluences) {
       if (constraints.at(l).relative) {
-        Eigen::Vector3f srcPos, tarPos;
+        Eigen::Vector3d srcPos, tarPos;
 
         computeVertexPosition(constraints.at(l).vertexId, srcPos);
 
         computeVertexPosition(constraints.at(l).targetId, tarPos);
 
-        residual.segment(numRows, 3) = (srcPos - tarPos).cast<double>() * sqrt(wCon);
+        residual.segment(numRows, 3) = (srcPos - tarPos) * std::sqrt(wCon);
       } else {
-        Eigen::Vector3f position;
+        Eigen::Vector3d position;
 
         computeVertexPosition(constraints.at(l).vertexId, position);
 
         residual.segment(numRows, 3) =
-            (position - constraints.at(l).targetPosition).cast<double>() * sqrt(wCon);
+            (position - constraints.at(l).targetPosition) * std::sqrt(wCon);
       }
 
       numRows += eConRows;
@@ -905,28 +901,28 @@ void DeformationGraph::applyDeltaSparse(Eigen::VectorXd& delta) {
 
   for (uint32_t j = 0; j < graph.size(); j++) {
     if (graph.at(j)->enabled) {
-      const_cast<float*>(graph.at(j)->rotation.data())[0] += delta(z + 0);
-      const_cast<float*>(graph.at(j)->rotation.data())[1] += delta(z + 1);
-      const_cast<float*>(graph.at(j)->rotation.data())[2] += delta(z + 2);
+      const_cast<double*>(graph.at(j)->rotation.data())[0] += delta(z + 0);
+      const_cast<double*>(graph.at(j)->rotation.data())[1] += delta(z + 1);
+      const_cast<double*>(graph.at(j)->rotation.data())[2] += delta(z + 2);
 
-      const_cast<float*>(graph.at(j)->rotation.data())[3] += delta(z + 3);
-      const_cast<float*>(graph.at(j)->rotation.data())[4] += delta(z + 4);
-      const_cast<float*>(graph.at(j)->rotation.data())[5] += delta(z + 5);
+      const_cast<double*>(graph.at(j)->rotation.data())[3] += delta(z + 3);
+      const_cast<double*>(graph.at(j)->rotation.data())[4] += delta(z + 4);
+      const_cast<double*>(graph.at(j)->rotation.data())[5] += delta(z + 5);
 
-      const_cast<float*>(graph.at(j)->rotation.data())[6] += delta(z + 6);
-      const_cast<float*>(graph.at(j)->rotation.data())[7] += delta(z + 7);
-      const_cast<float*>(graph.at(j)->rotation.data())[8] += delta(z + 8);
+      const_cast<double*>(graph.at(j)->rotation.data())[6] += delta(z + 6);
+      const_cast<double*>(graph.at(j)->rotation.data())[7] += delta(z + 7);
+      const_cast<double*>(graph.at(j)->rotation.data())[8] += delta(z + 8);
 
-      const_cast<float*>(graph.at(j)->translation.data())[0] += delta(z + 9);
-      const_cast<float*>(graph.at(j)->translation.data())[1] += delta(z + 10);
-      const_cast<float*>(graph.at(j)->translation.data())[2] += delta(z + 11);
+      const_cast<double*>(graph.at(j)->translation.data())[0] += delta(z + 9);
+      const_cast<double*>(graph.at(j)->translation.data())[1] += delta(z + 10);
+      const_cast<double*>(graph.at(j)->translation.data())[2] += delta(z + 11);
 
       z += numVariables;
     }
   }
 }
 
-void DeformationGraph::computeVertexPosition(int vertexId, Eigen::Vector3f& position) {
+void DeformationGraph::computeVertexPosition(int vertexId, Eigen::Vector3d& position) {
   assert(initialised);
 
   std::vector<VertexWeightMap>& weightMap = vertexMap.at(vertexId);
@@ -935,7 +931,7 @@ void DeformationGraph::computeVertexPosition(int vertexId, Eigen::Vector3f& posi
   position(1) = 0;
   position(2) = 0;
 
-  Eigen::Vector3f sourcePosition = sourceVertices->at(vertexId);
+  Eigen::Vector3d sourcePosition = sourceVertices->at(vertexId);
 
   for (uint32_t i = 0; i < weightMap.size(); i++) {
     position += weightMap.at(i).weight *
@@ -950,7 +946,7 @@ float DeformationGraph::nonRelativeConstraintError() {
 
   for (uint32_t l = 0; l < constraints.size(); l++) {
     if (!constraints.at(l).relative) {
-      Eigen::Vector3f position;
+      Eigen::Vector3d position;
       computeVertexPosition(constraints.at(l).vertexId, position);
       result += (position - constraints.at(l).targetPosition).norm();
     }

@@ -40,22 +40,22 @@ class Ferns {
       GPUTexture* imageTexture,
       GPUTexture* vertexTexture,
       GPUTexture* normalTexture,
-      const Eigen::Matrix4f& pose,
+      const Sophus::SE3d& T_wc,
       int srcTime,
       const float threshold);
 
   class SurfaceConstraint {
    public:
-    SurfaceConstraint(const Eigen::Vector4f& sourcePoint, const Eigen::Vector4f& targetPoint)
+    SurfaceConstraint(const Eigen::Vector4d& sourcePoint, const Eigen::Vector4d& targetPoint)
         : sourcePoint(sourcePoint), targetPoint(targetPoint) {}
 
-    Eigen::Vector4f sourcePoint;
-    Eigen::Vector4f targetPoint;
+    Eigen::Vector4d sourcePoint;
+    Eigen::Vector4d targetPoint;
   };
 
-  Eigen::Matrix4f findFrame(
+  Sophus::SE3d findFrame(
       std::vector<SurfaceConstraint>& constraints,
-      const Eigen::Matrix4f& currPose,
+      const Sophus::SE3d& T_wc,
       GPUTexture* vertexTexture,
       GPUTexture* normalTexture,
       GPUTexture* imageTexture,
@@ -78,7 +78,7 @@ class Ferns {
     Frame(
         int n,
         int id,
-        const Eigen::Matrix4f& pose,
+        const Sophus::SE3d& T_wc,
         const int srcTime,
         const int numPixels,
         uint8_t* rgb = 0,
@@ -86,7 +86,7 @@ class Ferns {
         Eigen::Vector4f* norms = 0)
         : goodCodes(0),
           id(id),
-          pose(pose),
+          T_wc(T_wc),
           srcTime(srcTime),
           initRgb(rgb),
           initVerts(verts),
@@ -125,7 +125,7 @@ class Ferns {
     uint8_t* codes;
     int goodCodes;
     const int id;
-    Eigen::Matrix4f pose;
+    Sophus::SE3d T_wc;
     const int srcTime;
     uint8_t* initRgb;
     Eigen::Vector4f* initVerts;
@@ -159,8 +159,8 @@ class Ferns {
   float photometricCheck(
       const Img<Eigen::Vector4f>& vertSmall,
       const Img<Eigen::Matrix<uint8_t, 3, 1>>& imgSmall,
-      const Eigen::Matrix4f& estPose,
-      const Eigen::Matrix4f& fernPose,
+      const Sophus::SE3d& T_wc_est,
+      const Sophus::SE3d& T_wc_fern,
       const uint8_t* fernRgb);
 
   GPUTexture vertFern;

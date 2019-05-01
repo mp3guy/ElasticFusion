@@ -54,9 +54,6 @@
 #include "cudafuncs.cuh"
 #include "operators.cuh"
 
-constexpr int reduceThreads = 256;
-constexpr int reduceBlocks = 64;
-
 __inline__ __device__ JtJJtrSE3 warpReduceSum(JtJJtrSE3 val) {
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
     val.aa += __shfl_down_sync(0xFFFFFFFF, val.aa, offset);

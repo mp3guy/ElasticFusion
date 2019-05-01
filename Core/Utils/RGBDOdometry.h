@@ -50,7 +50,7 @@ class RGBDOdometry {
   void initICPModel(
       GPUTexture* predictedVertices,
       GPUTexture* predictedNormals,
-      const Eigen::Matrix4f& modelPose);
+      const Sophus::SE3d& T_wc);
 
   void initRGB(GPUTexture* rgb);
 
@@ -59,6 +59,14 @@ class RGBDOdometry {
   void initFirstRGB(GPUTexture* rgb);
 
   void getIncrementalTransformation(
+      Sophus::SE3d& T_wc,
+      const bool& rgbOnly,
+      const float& icpWeight,
+      const bool& pyramid,
+      const bool& fastOdom,
+      const bool& so3);
+
+  void getIncrementalTransformationNew(
       Eigen::Vector3f& trans,
       Eigen::Matrix<float, 3, 3, Eigen::RowMajor>& rot,
       const bool& rgbOnly,

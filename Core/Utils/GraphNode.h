@@ -28,9 +28,9 @@ class GraphNode {
   GraphNode() {}
 
   int id;
-  Eigen::Vector3f position;
-  Eigen::Matrix3f rotation;
-  Eigen::Vector3f translation;
+  Eigen::Vector3d position;
+  Eigen::Matrix3d rotation;
+  Eigen::Vector3d translation;
   std::vector<int> neighbours;
   bool enabled;
 };

@@ -21,6 +21,7 @@
 #define ODOMETRYPROVIDER_H_
 
 #include <float.h>
+#include <sophus/se3.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 

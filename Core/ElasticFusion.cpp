@@ -52,7 +52,6 @@ ElasticFusion::ElasticFusion(
           Intrinsics::getInstance().fy()),
       ferns(500, depthCut * 1000, photoThresh),
       saveFilename(fileName),
-      currPose(Eigen::Matrix4f::Identity()),
       tick(1),
       timeDelta(timeDelta),
       icpCountThresh(countThresh),
@@ -117,7 +116,7 @@ ElasticFusion::~ElasticFusion() {
   std::ofstream f;
   f.open(fname.c_str(), std::fstream::out);
 
-  for (size_t i = 0; i < poseGraph.size(); i++) {
+  for (size_t i = 0; i < t_T_wc.size(); i++) {
     std::stringstream strs;
 
     if (iclnuim) {
@@ -126,12 +125,12 @@ ElasticFusion::~ElasticFusion() {
       strs << std::setprecision(6) << std::fixed << (double)poseLogTimes.at(i) / 1000000.0 << " ";
     }
 
-    Eigen::Vector3f trans = poseGraph.at(i).second.topRightCorner(3, 1);
-    Eigen::Matrix3f rot = poseGraph.at(i).second.topLeftCorner(3, 3);
+    const Eigen::Vector3d trans = t_T_wc.at(i).second.translation();
+    const Eigen::Matrix3d rot = t_T_wc.at(i).second.rotationMatrix();
 
     f << strs.str() << trans(0) << " " << trans(1) << " " << trans(2) << " ";
 
-    Eigen::Quaternionf currentCameraRotation(rot);
+    Eigen::Quaterniond currentCameraRotation(rot);
 
     f << currentCameraRotation.x() << " " << currentCameraRotation.y() << " "
       << currentCameraRotation.z() << " " << currentCameraRotation.w() << "\n";
@@ -272,9 +271,8 @@ void ElasticFusion::processFrame(
     const uint8_t* rgb,
     const uint16_t* depth,
     const int64_t& timestamp,
-    const Eigen::Matrix4f* inPose,
     const float weightMultiplier,
-    const bool bootstrap) {
+    const Sophus::SE3d* in_T_wc) {
   TICK("Run");
 
   textures[GPUTexture::DEPTH_RAW]->texture->Upload(
@@ -297,11 +295,11 @@ void ElasticFusion::processFrame(
 
     frameToModel.initFirstRGB(textures[GPUTexture::RGB]);
   } else {
-    Eigen::Matrix4f lastPose = currPose;
+    const Sophus::SE3d T_wc_prev = T_wc_curr;
 
     bool trackingOk = true;
 
-    if (bootstrap || !inPose) {
+    if (!in_T_wc) {
       TICK("autoFill");
       resize.image(indexMap.imageTex(), imageBuff);
       bool shouldFillIn = !denseEnough(imageBuff);
@@ -312,7 +310,7 @@ void ElasticFusion::processFrame(
       frameToModel.initICPModel(
           shouldFillIn ? &fillIn.vertexTexture : indexMap.vertexTex(),
           shouldFillIn ? &fillIn.normalTexture : indexMap.normalTex(),
-          currPose);
+          T_wc_curr);
       frameToModel.initRGBModel(
           (shouldFillIn || frameToFrameRGB) ? &fillIn.imageTexture : indexMap.imageTex());
 
@@ -320,17 +318,9 @@ void ElasticFusion::processFrame(
       frameToModel.initRGB(textures[GPUTexture::RGB]);
       TOCK("odomInit");
 
-      if (bootstrap) {
-        assert(inPose);
-        currPose = currPose * (*inPose);
-      }
-
-      Eigen::Vector3f trans = currPose.topRightCorner(3, 1);
-      Eigen::Matrix<float, 3, 3, Eigen::RowMajor> rot = currPose.topLeftCorner(3, 3);
-
       TICK("odom");
       frameToModel.getIncrementalTransformation(
-          trans, rot, rgbOnly, icpWeight, pyramid, fastOdom, so3);
+          T_wc_curr, rgbOnly, icpWeight, pyramid, fastOdom, so3);
       TOCK("odom");
 
       trackingOk = !reloc || frameToModel.lastICPError < 1e-04;
@@ -374,19 +364,14 @@ void ElasticFusion::processFrame(
         }
       }
 
-      currPose.topRightCorner(3, 1) = trans;
-      currPose.topLeftCorner(3, 3) = rot;
     } else {
-      currPose = *inPose;
+      T_wc_curr = *in_T_wc;
     }
 
-    Eigen::Matrix4f diff = currPose.inverse() * lastPose;
-
-    Eigen::Vector3f diffTrans = diff.topRightCorner(3, 1);
-    Eigen::Matrix3f diffRot = diff.topLeftCorner(3, 3);
+    const Sophus::SE3d T_curr_prev = T_wc_curr.inverse() * T_wc_prev;
 
     // Weight by velocity
-    float weighting = std::max(diffTrans.norm(), rodrigues2(diffRot).norm());
+    float weighting = std::max(T_curr_prev.translation().norm(), T_curr_prev.log().norm());
 
     float largest = 0.01;
     float minWeight = 0.5;
@@ -401,15 +386,15 @@ void ElasticFusion::processFrame(
 
     predict();
 
-    Eigen::Matrix4f recoveryPose = currPose;
+    Sophus::SE3d T_wc_recovery = T_wc_curr;
 
     if (closeLoops) {
       lastFrameRecovery = false;
 
       TICK("Ferns::findFrame");
-      recoveryPose = ferns.findFrame(
+      T_wc_recovery = ferns.findFrame(
           constraints,
-          currPose,
+          T_wc_curr,
           &fillIn.vertexTexture,
           &fillIn.normalTexture,
           &fillIn.imageTexture,
@@ -424,7 +409,7 @@ void ElasticFusion::processFrame(
 
     if (closeLoops && ferns.lastClosest != -1) {
       if (lost) {
-        currPose = recoveryPose;
+        T_wc_curr = T_wc_recovery;
         lastFrameRecovery = true;
       } else {
         for (size_t i = 0; i < constraints.size(); i++) {
@@ -440,14 +425,14 @@ void ElasticFusion::processFrame(
           globalDeformation.addConstraint(relativeCons.at(i));
         }
 
-        if (globalDeformation.constrain(ferns.frames, rawGraph, tick, true, poseGraph, true)) {
-          currPose = recoveryPose;
+        if (globalDeformation.constrain(ferns.frames, rawGraph, tick, true, t_T_wc, true)) {
+          T_wc_curr = T_wc_recovery;
 
           poseMatches.push_back(PoseMatch(
               ferns.lastClosest,
               ferns.frames.size(),
-              ferns.frames.at(ferns.lastClosest)->pose,
-              currPose,
+              ferns.frames.at(ferns.lastClosest)->T_wc,
+              T_wc_curr,
               constraints,
               true));
 
@@ -464,7 +449,7 @@ void ElasticFusion::processFrame(
       // failed!)
       TICK("IndexMap::INACTIVE");
       indexMap.combinedPredict(
-          currPose,
+          T_wc_curr,
           globalModel.model(),
           maxDepthProcessed,
           confidenceThreshold,
@@ -475,16 +460,15 @@ void ElasticFusion::processFrame(
       TOCK("IndexMap::INACTIVE");
 
       // WARNING initICP* must be called before initRGB*
-      modelToModel.initICPModel(indexMap.oldVertexTex(), indexMap.oldNormalTex(), currPose);
+      modelToModel.initICPModel(indexMap.oldVertexTex(), indexMap.oldNormalTex(), T_wc_curr);
       modelToModel.initRGBModel(indexMap.oldImageTex());
 
       modelToModel.initICP(indexMap.vertexTex(), indexMap.normalTex());
       modelToModel.initRGB(indexMap.imageTex());
 
-      Eigen::Vector3f trans = currPose.topRightCorner(3, 1);
-      Eigen::Matrix<float, 3, 3, Eigen::RowMajor> rot = currPose.topLeftCorner(3, 3);
+      Sophus::SE3d T_wc_est = T_wc_curr;
 
-      modelToModel.getIncrementalTransformation(trans, rot, false, 10, pyramid, fastOdom, false);
+      modelToModel.getIncrementalTransformation(T_wc_est, false, 10, pyramid, fastOdom, false);
 
       Eigen::MatrixXd covar = modelToModel.getCovariance();
       bool covOk = true;
@@ -496,11 +480,6 @@ void ElasticFusion::processFrame(
         }
       }
 
-      Eigen::Matrix4f estPose = Eigen::Matrix4f::Identity();
-
-      estPose.topRightCorner(3, 1) = trans;
-      estPose.topLeftCorner(3, 3) = rot;
-
       if (covOk && modelToModel.lastICPCount > icpCountThresh &&
           modelToModel.lastICPError < icpErrThresh) {
         resize.vertex(indexMap.vertexTex(), consBuff);
@@ -511,22 +490,22 @@ void ElasticFusion::processFrame(
             if (consBuff.at<Eigen::Vector4f>(j, i)(2) > 0 &&
                 consBuff.at<Eigen::Vector4f>(j, i)(2) < maxDepthProcessed &&
                 timesBuff.at<uint16_t>(j, i) > 0) {
-              Eigen::Vector4f worldRawPoint = currPose *
-                  Eigen::Vector4f(consBuff.at<Eigen::Vector4f>(j, i)(0),
+              Eigen::Vector4d vert_w_curr = T_wc_curr *
+                  Eigen::Vector4d(consBuff.at<Eigen::Vector4f>(j, i)(0),
                                   consBuff.at<Eigen::Vector4f>(j, i)(1),
                                   consBuff.at<Eigen::Vector4f>(j, i)(2),
-                                  1.0f);
+                                  1.0);
 
-              Eigen::Vector4f worldModelPoint = estPose *
-                  Eigen::Vector4f(consBuff.at<Eigen::Vector4f>(j, i)(0),
+              Eigen::Vector4d vert_w_est = T_wc_est *
+                  Eigen::Vector4d(consBuff.at<Eigen::Vector4f>(j, i)(0),
                                   consBuff.at<Eigen::Vector4f>(j, i)(1),
                                   consBuff.at<Eigen::Vector4f>(j, i)(2),
-                                  1.0f);
+                                  1.0);
 
-              constraints.push_back(Ferns::SurfaceConstraint(worldRawPoint, worldModelPoint));
+              constraints.push_back(Ferns::SurfaceConstraint(vert_w_curr, vert_w_est));
 
               localDeformation.addConstraint(
-                  worldRawPoint, worldModelPoint, tick, timesBuff.at<uint16_t>(j, i), deforms == 0);
+                  vert_w_curr, vert_w_est, tick, timesBuff.at<uint16_t>(j, i), deforms == 0);
             }
           }
         }
@@ -534,13 +513,18 @@ void ElasticFusion::processFrame(
         std::vector<Deformation::Constraint> newRelativeCons;
 
         if (localDeformation.constrain(
-                ferns.frames, rawGraph, tick, false, poseGraph, false, &newRelativeCons)) {
+                ferns.frames, rawGraph, tick, false, t_T_wc, false, &newRelativeCons)) {
           poseMatches.push_back(PoseMatch(
-              ferns.frames.size() - 1, ferns.frames.size(), estPose, currPose, constraints, false));
+              ferns.frames.size() - 1,
+              ferns.frames.size(),
+              T_wc_est,
+              T_wc_curr,
+              constraints,
+              false));
 
           deforms += rawGraph.size() > 0;
 
-          currPose = estPose;
+          T_wc_curr = T_wc_est;
 
           for (size_t i = 0; i < newRelativeCons.size(); i += newRelativeCons.size() / 3) {
             relativeCons.push_back(newRelativeCons.at(i));
@@ -551,11 +535,11 @@ void ElasticFusion::processFrame(
 
     if (!rgbOnly && trackingOk && !lost) {
       TICK("indexMap");
-      indexMap.predictIndices(currPose, tick, globalModel.model(), maxDepthProcessed, timeDelta);
+      indexMap.predictIndices(T_wc_curr, tick, globalModel.model(), maxDepthProcessed, timeDelta);
       TOCK("indexMap");
 
       globalModel.fuse(
-          currPose,
+          T_wc_curr,
           tick,
           textures[GPUTexture::RGB],
           textures[GPUTexture::DEPTH_METRIC],
@@ -565,11 +549,10 @@ void ElasticFusion::processFrame(
           indexMap.colorTimeTex(),
           indexMap.normalRadTex(),
           maxDepthProcessed,
-          confidenceThreshold,
           weighting);
 
       TICK("indexMap");
-      indexMap.predictIndices(currPose, tick, globalModel.model(), maxDepthProcessed, timeDelta);
+      indexMap.predictIndices(T_wc_curr, tick, globalModel.model(), maxDepthProcessed, timeDelta);
       TOCK("indexMap");
 
       // If we're deforming we need to predict the depth again to figure out which
@@ -577,7 +560,7 @@ void ElasticFusion::processFrame(
       // this loop
       if (rawGraph.size() > 0 && !fernAccepted) {
         indexMap.synthesizeDepth(
-            currPose,
+            T_wc_curr,
             globalModel.model(),
             maxDepthProcessed,
             confidenceThreshold,
@@ -587,7 +570,7 @@ void ElasticFusion::processFrame(
       }
 
       globalModel.clean(
-          currPose,
+          T_wc_curr,
           tick,
           indexMap.indexTex(),
           indexMap.vertConfTex(),
@@ -602,7 +585,7 @@ void ElasticFusion::processFrame(
     }
   }
 
-  poseGraph.push_back(std::pair<unsigned long long int, Eigen::Matrix4f>(tick, currPose));
+  t_T_wc.push_back(std::pair<uint64_t, Sophus::SE3d>(tick, T_wc_curr));
   poseLogTimes.push_back(timestamp);
 
   TICK("sampleGraph");
@@ -629,7 +612,7 @@ void ElasticFusion::processFerns() {
       &fillIn.imageTexture,
       &fillIn.vertexTexture,
       &fillIn.normalTexture,
-      currPose,
+      T_wc_curr,
       tick,
       fernThresh);
   TOCK("Ferns::addFrame");
@@ -640,7 +623,7 @@ void ElasticFusion::predict() {
 
   if (lastFrameRecovery) {
     indexMap.combinedPredict(
-        currPose,
+        T_wc_curr,
         globalModel.model(),
         maxDepthProcessed,
         confidenceThreshold,
@@ -650,7 +633,7 @@ void ElasticFusion::predict() {
         IndexMap::ACTIVE);
   } else {
     indexMap.combinedPredict(
-        currPose,
+        T_wc_curr,
         globalModel.model(),
         maxDepthProcessed,
         confidenceThreshold,
@@ -797,50 +780,6 @@ void ElasticFusion::savePly() {
   delete[] mapData;
 }
 
-Eigen::Vector3f ElasticFusion::rodrigues2(const Eigen::Matrix3f& matrix) {
-  Eigen::JacobiSVD<Eigen::Matrix3f> svd(matrix, Eigen::ComputeFullV | Eigen::ComputeFullU);
-  Eigen::Matrix3f R = svd.matrixU() * svd.matrixV().transpose();
-
-  double rx = R(2, 1) - R(1, 2);
-  double ry = R(0, 2) - R(2, 0);
-  double rz = R(1, 0) - R(0, 1);
-
-  double s = sqrt((rx * rx + ry * ry + rz * rz) * 0.25);
-  double c = (R.trace() - 1) * 0.5;
-  c = c > 1. ? 1. : c < -1. ? -1. : c;
-
-  double theta = acos(c);
-
-  if (s < 1e-5) {
-    double t;
-
-    if (c > 0)
-      rx = ry = rz = 0;
-    else {
-      t = (R(0, 0) + 1) * 0.5;
-      rx = sqrt(std::max(t, 0.0));
-      t = (R(1, 1) + 1) * 0.5;
-      ry = sqrt(std::max(t, 0.0)) * (R(0, 1) < 0 ? -1.0 : 1.0);
-      t = (R(2, 2) + 1) * 0.5;
-      rz = sqrt(std::max(t, 0.0)) * (R(0, 2) < 0 ? -1.0 : 1.0);
-
-      if (fabs(rx) < fabs(ry) && fabs(rx) < fabs(rz) && (R(1, 2) > 0) != (ry * rz > 0))
-        rz = -rz;
-      theta /= sqrt(rx * rx + ry * ry + rz * rz);
-      rx *= theta;
-      ry *= theta;
-      rz *= theta;
-    }
-  } else {
-    double vth = 1 / (2 * s);
-    vth *= theta;
-    rx *= vth;
-    ry *= vth;
-    rz *= vth;
-  }
-  return Eigen::Vector3d(rx, ry, rz).cast<float>();
-}
-
 // Sad times ahead
 IndexMap& ElasticFusion::getIndexMap() {
   return indexMap;
@@ -931,8 +870,8 @@ const float& ElasticFusion::getMaxDepthProcessed() {
   return maxDepthProcessed;
 }
 
-const Eigen::Matrix4f& ElasticFusion::getCurrPose() {
-  return currPose;
+const Sophus::SE3d& ElasticFusion::get_T_wc() {
+  return T_wc_curr;
 }
 
 const int& ElasticFusion::getDeforms() {

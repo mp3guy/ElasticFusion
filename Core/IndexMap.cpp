@@ -188,7 +188,7 @@ IndexMap::IndexMap()
 IndexMap::~IndexMap() {}
 
 void IndexMap::predictIndices(
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     const int& time,
     const std::pair<GLuint, GLuint>& model,
     const float depthCutoff,
@@ -205,7 +205,7 @@ void IndexMap::predictIndices(
 
   indexProgram->Bind();
 
-  Eigen::Matrix4f t_inv = pose.inverse();
+  const Eigen::Matrix4f T_cw = T_wc.inverse().matrix().cast<float>();
 
   Eigen::Vector4f cam(
       Intrinsics::getInstance().cx() * IndexMap::FACTOR,
@@ -213,7 +213,7 @@ void IndexMap::predictIndices(
       Intrinsics::getInstance().fx() * IndexMap::FACTOR,
       Intrinsics::getInstance().fy() * IndexMap::FACTOR);
 
-  indexProgram->setUniform(Uniform("t_inv", t_inv));
+  indexProgram->setUniform(Uniform("t_inv", T_cw));
   indexProgram->setUniform(Uniform("cam", cam));
   indexProgram->setUniform(Uniform("maxDepth", depthCutoff));
   indexProgram->setUniform(
@@ -291,7 +291,7 @@ void IndexMap::renderDepth(const float depthCutoff) {
 }
 
 void IndexMap::combinedPredict(
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     const std::pair<GLuint, GLuint>& model,
     const float depthCutoff,
     const float confThreshold,
@@ -326,7 +326,7 @@ void IndexMap::combinedPredict(
 
   combinedProgram->Bind();
 
-  Eigen::Matrix4f t_inv = pose.inverse();
+  const Eigen::Matrix4f T_cw = T_wc.inverse().matrix().cast<float>();
 
   Eigen::Vector4f cam(
       Intrinsics::getInstance().cx(),
@@ -334,7 +334,7 @@ void IndexMap::combinedPredict(
       Intrinsics::getInstance().fx(),
       Intrinsics::getInstance().fy());
 
-  combinedProgram->setUniform(Uniform("t_inv", t_inv));
+  combinedProgram->setUniform(Uniform("t_inv", T_cw));
   combinedProgram->setUniform(Uniform("cam", cam));
   combinedProgram->setUniform(Uniform("maxDepth", depthCutoff));
   combinedProgram->setUniform(Uniform("confThreshold", confThreshold));
@@ -393,7 +393,7 @@ void IndexMap::combinedPredict(
 }
 
 void IndexMap::synthesizeDepth(
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     const std::pair<GLuint, GLuint>& model,
     const float depthCutoff,
     const float confThreshold,
@@ -415,7 +415,7 @@ void IndexMap::synthesizeDepth(
 
   depthProgram->Bind();
 
-  Eigen::Matrix4f t_inv = pose.inverse();
+  const Eigen::Matrix4f T_cw = T_wc.inverse().matrix().cast<float>();
 
   Eigen::Vector4f cam(
       Intrinsics::getInstance().cx(),
@@ -423,7 +423,7 @@ void IndexMap::synthesizeDepth(
       Intrinsics::getInstance().fx(),
       Intrinsics::getInstance().fy());
 
-  depthProgram->setUniform(Uniform("t_inv", t_inv));
+  depthProgram->setUniform(Uniform("t_inv", T_cw));
   depthProgram->setUniform(Uniform("cam", cam));
   depthProgram->setUniform(Uniform("maxDepth", depthCutoff));
   depthProgram->setUniform(Uniform("confThreshold", confThreshold));

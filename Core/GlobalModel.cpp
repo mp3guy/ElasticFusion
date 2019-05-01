@@ -354,7 +354,7 @@ const std::pair<GLuint, GLuint>& GlobalModel::model() {
 }
 
 void GlobalModel::fuse(
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     const int& time,
     GPUTexture* rgb,
     GPUTexture* depthRaw,
@@ -364,7 +364,6 @@ void GlobalModel::fuse(
     GPUTexture* colorTimeMap,
     GPUTexture* normRadMap,
     const float depthCutoff,
-    const float confThreshold,
     const float weighting) {
   TICK("Fuse::Data");
   // This first part does data association and computes the vertex to merge with, storing
@@ -401,7 +400,7 @@ void GlobalModel::fuse(
   dataProgram->setUniform(Uniform("rows", (float)Resolution::getInstance().rows()));
   dataProgram->setUniform(Uniform("scale", (float)IndexMap::FACTOR));
   dataProgram->setUniform(Uniform("texDim", (float)TEXTURE_DIMENSION));
-  dataProgram->setUniform(Uniform("pose", pose));
+  dataProgram->setUniform(Uniform("pose", T_wc.cast<float>().matrix()));
   dataProgram->setUniform(Uniform("maxDepth", depthCutoff));
 
   glEnableVertexAttribArray(0);
@@ -526,7 +525,7 @@ void GlobalModel::fuse(
 }
 
 void GlobalModel::clean(
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     const int& time,
     GPUTexture* indexMap,
     GPUTexture* vertConfMap,
@@ -565,8 +564,8 @@ void GlobalModel::clean(
   unstableProgram->setUniform(Uniform("maxDepth", maxDepth));
   unstableProgram->setUniform(Uniform("isFern", (int)isFern));
 
-  Eigen::Matrix4f t_inv = pose.inverse();
-  unstableProgram->setUniform(Uniform("t_inv", t_inv));
+  const Eigen::Matrix4f T_cw = T_wc.inverse().matrix().cast<float>();
+  unstableProgram->setUniform(Uniform("t_inv", T_cw));
 
   unstableProgram->setUniform(Uniform(
       "cam",

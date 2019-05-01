@@ -47,8 +47,8 @@ class Deformation {
   class Constraint {
    public:
     Constraint(
-        const Eigen::Vector3f& src,
-        const Eigen::Vector3f& target,
+        const Eigen::Vector3d& src,
+        const Eigen::Vector3d& target,
         const uint64_t& srcTime,
         const uint64_t& targetTime,
         const bool relative,
@@ -62,8 +62,8 @@ class Deformation {
           srcPointPoolId(-1),
           tarPointPoolId(-1) {}
 
-    Eigen::Vector3f src;
-    Eigen::Vector3f target;
+    Eigen::Vector3d src;
+    Eigen::Vector3d target;
     uint64_t srcTime;
     uint64_t targetTime;
     bool relative;
@@ -73,8 +73,8 @@ class Deformation {
   };
 
   void addConstraint(
-      const Eigen::Vector4f& src,
-      const Eigen::Vector4f& target,
+      const Eigen::Vector4d& src,
+      const Eigen::Vector4d& target,
       const uint64_t& srcTime,
       const uint64_t& targetTime,
       const bool pinConstraints);
@@ -86,12 +86,12 @@ class Deformation {
       std::vector<float>& rawGraph,
       int time,
       const bool fernMatch,
-      std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>>& poseGraph,
+      std::vector<std::pair<uint64_t, Sophus::SE3d>>& t_T_wc,
       const bool relaxGraph,
       std::vector<Constraint>* newRelativeCons = 0);
 
-  Eigen::Vector4f* getVertices() {
-    return vertices;
+  Eigen::Vector4f* getRawSampledNodes_w() {
+    return rawSampledNodes_w;
   }
 
   int getCount() {
@@ -105,8 +105,8 @@ class Deformation {
  private:
   DeformationGraph def;
 
-  std::vector<unsigned long long int> vertexTimes;
-  std::vector<Eigen::Vector3f> pointPool;
+  std::vector<uint64_t> vertexTimes;
+  std::vector<Eigen::Vector3d> pointPool;
   int originalPointPool;
   int firstGraphNode;
 
@@ -116,11 +116,11 @@ class Deformation {
   const int bufferSize;
   GLuint countQuery;
   uint32_t count;
-  Eigen::Vector4f* vertices;
+  Eigen::Vector4f* rawSampledNodes_w;
 
   std::vector<std::pair<uint64_t, Eigen::Vector3f>> poseGraphPoints;
-  std::vector<unsigned long long int> graphPoseTimes;
-  std::vector<Eigen::Vector3f>* graphPosePoints;
+  std::vector<uint64_t> graphPoseTimes;
+  std::vector<Eigen::Vector3d>* graphPosePoints;
 
   std::vector<Constraint> constraints;
   int lastDeformTime;

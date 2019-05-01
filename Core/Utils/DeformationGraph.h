@@ -20,6 +20,7 @@
 #ifndef DEFORMATIONGRAPH_H_
 #define DEFORMATIONGRAPH_H_
 
+#include <sophus/se3.hpp>
 #include <vector>
 
 #include "GraphNode.h"
@@ -35,21 +36,17 @@ class CholeskyDecomp;
 
 class DeformationGraph {
  public:
-  DeformationGraph(int k, std::vector<Eigen::Vector3f>* sourceVertices);
+  DeformationGraph(int k, std::vector<Eigen::Vector3d>* sourceVertices);
   virtual ~DeformationGraph();
 
   void initialiseGraph(
-      std::vector<Eigen::Vector3f>* customGraph,
-      std::vector<unsigned long long int>* graphTimeMap);
+      std::vector<Eigen::Vector3d>* customGraph,
+      std::vector<uint64_t>* graphTimeMap);
 
-  void appendVertices(
-      std::vector<unsigned long long int>* vertexTimeMap,
-      uint32_t originalPointEnd);
+  void appendVertices(std::vector<uint64_t>* vertexTimeMap, uint32_t originalPointEnd);
 
   // This clears the pose map...
-  void setPosesSeq(
-      std::vector<unsigned long long int>* poseTimeMap,
-      const std::vector<Eigen::Matrix4f>& poses);
+  void setPosesSeq(std::vector<uint64_t>* poseTimeMap, const std::vector<Sophus::SE3d>& T_wcs);
 
   // Stores a weight and node pointer for a vertex
   class VertexWeightMap {
@@ -84,21 +81,21 @@ class DeformationGraph {
   };
 
   std::vector<GraphNode*>& getGraph();
-  std::vector<unsigned long long int>& getGraphTimes();
+  std::vector<uint64_t>& getGraphTimes();
 
-  void addConstraint(int vertexId, Eigen::Vector3f& target);
+  void addConstraint(int vertexId, Eigen::Vector3d& target);
   void addRelativeConstraint(int vertexId, int targetId);
 
   void clearConstraints();
 
   void applyGraphToVertices();
-  void applyGraphToPoses(std::vector<Eigen::Matrix4f*>& poses);
+  void applyGraphToPoses(std::vector<Sophus::SE3d*> T_wc_ptrs);
 
   bool optimiseGraphSparse(
       float& error,
       float& meanConsErr,
       const bool fernMatch,
-      const unsigned long long int lastDeformTime);
+      const uint64_t lastDeformTime);
   void resetGraph();
 
   bool isInit() {
@@ -127,7 +124,7 @@ class DeformationGraph {
 
   // Maps vertex indices to neighbours and weights
   std::vector<std::vector<VertexWeightMap>> vertexMap;
-  std::vector<Eigen::Vector3f>* sourceVertices;
+  std::vector<Eigen::Vector3d>* sourceVertices;
 
   // Maps pose indices to neighbours and weights
   std::vector<std::vector<VertexWeightMap>> poseMap;
@@ -135,32 +132,32 @@ class DeformationGraph {
   // Stores a vertex constraint
   class Constraint {
    public:
-    Constraint(int vertexId, Eigen::Vector3f& targetPosition)
+    Constraint(int vertexId, Eigen::Vector3d& targetPosition)
         : vertexId(vertexId), targetPosition(targetPosition), relative(false), targetId(-1) {}
 
     Constraint(int vertexId, int targetId)
         : vertexId(vertexId),
-          targetPosition(Eigen::Vector3f::Zero()),
+          targetPosition(Eigen::Vector3d::Zero()),
           relative(true),
           targetId(targetId) {}
 
     int vertexId;
-    Eigen::Vector3f targetPosition;
+    Eigen::Vector3d targetPosition;
     bool relative;
     int targetId;
   };
 
   std::vector<Constraint> constraints;
 
-  std::vector<Eigen::Vector3f>* graphCloud;
-  std::vector<unsigned long long int> sampledGraphTimes;
+  std::vector<Eigen::Vector3d>* graphCloud;
+  std::vector<uint64_t> sampledGraphTimes;
   uint32_t lastPointCount;
 
   void connectGraphSeq();
 
-  void weightVerticesSeq(std::vector<unsigned long long int>* vertexTimeMap);
+  void weightVerticesSeq(std::vector<uint64_t>* vertexTimeMap);
 
-  void computeVertexPosition(int vertexId, Eigen::Vector3f& position);
+  void computeVertexPosition(int vertexId, Eigen::Vector3d& position);
 
   void sparseJacobian(Jacobian& jacobian, const int numRows, const int numCols, const int backSet);
 

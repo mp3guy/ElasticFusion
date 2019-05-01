@@ -79,7 +79,7 @@ bool Ferns::addFrame(
     GPUTexture* imageTexture,
     GPUTexture* vertexTexture,
     GPUTexture* normalTexture,
-    const Eigen::Matrix4f& pose,
+    const Sophus::SE3d& T_wc,
     int srcTime,
     const float threshold) {
   Img<Eigen::Matrix<uint8_t, 3, 1>> img(height, width);
@@ -93,7 +93,7 @@ bool Ferns::addFrame(
   Frame* frame = new Frame(
       num,
       frames.size(),
-      pose,
+      T_wc,
       srcTime,
       width * height,
       (uint8_t*)img.data,
@@ -159,9 +159,9 @@ bool Ferns::addFrame(
   }
 }
 
-Eigen::Matrix4f Ferns::findFrame(
+Sophus::SE3d Ferns::findFrame(
     std::vector<SurfaceConstraint>& constraints,
-    const Eigen::Matrix4f& currPose,
+    const Sophus::SE3d& T_wc,
     GPUTexture* vertexTexture,
     GPUTexture* normalTexture,
     GPUTexture* imageTexture,
@@ -177,7 +177,7 @@ Eigen::Matrix4f Ferns::findFrame(
   resize.vertex(vertexTexture, vertSmall);
   resize.vertex(normalTexture, normSmall);
 
-  Frame* frame = new Frame(num, 0, Eigen::Matrix4f::Identity(), 0, width * height);
+  Frame* frame = new Frame(num, 0, Sophus::SE3d(), 0, width * height);
 
   int* coOccurrences = new int[frames.size()];
 
@@ -223,10 +223,10 @@ Eigen::Matrix4f Ferns::findFrame(
 
   delete[] coOccurrences;
 
-  Eigen::Matrix4f estPose = Eigen::Matrix4f::Identity();
+  Sophus::SE3d T_wc_est;
 
   if (minId != -1 && blockHDAware(frame, frames.at(minId)) > 0.3) {
-    Eigen::Matrix4f fernPose = frames.at(minId)->pose;
+    Sophus::SE3d T_wc_fern = frames.at(minId)->T_wc;
 
     vertFern.texture->Upload(frames.at(minId)->initVerts, GL_RGBA, GL_FLOAT);
     vertCurrent.texture->Upload(vertSmall.data, GL_RGBA, GL_FLOAT);
@@ -238,24 +238,20 @@ Eigen::Matrix4f Ferns::findFrame(
     //        colorCurrent.texture->Upload(imgSmall.data, GL_RGB, GL_UNSIGNED_BYTE);
 
     // WARNING initICP* must be called before initRGB*
-    rgbd.initICPModel(&vertFern, &normFern, fernPose);
+    rgbd.initICPModel(&vertFern, &normFern, T_wc_fern);
     //        rgbd.initRGBModel(&colorFern);
 
     rgbd.initICP(&vertCurrent, &normCurrent);
     //        rgbd.initRGB(&colorCurrent);
 
-    Eigen::Vector3f trans = fernPose.topRightCorner(3, 1);
-    Eigen::Matrix<float, 3, 3, Eigen::RowMajor> rot = fernPose.topLeftCorner(3, 3);
+    T_wc_est = T_wc_fern;
 
     TICK("fernOdom");
-    rgbd.getIncrementalTransformation(trans, rot, false, 100, false, false, false);
+    rgbd.getIncrementalTransformation(T_wc_est, false, 100, false, false, false);
     TOCK("fernOdom");
 
-    estPose.topRightCorner(3, 1) = trans;
-    estPose.topLeftCorner(3, 3) = rot;
-
     float photoError =
-        photometricCheck(vertSmall, imgSmall, estPose, fernPose, frames.at(minId)->initRgb);
+        photometricCheck(vertSmall, imgSmall, T_wc_est, T_wc_fern, frames.at(minId)->initRgb);
 
     int icpCountThresh = lost ? 1400 : 2400;
 
@@ -272,23 +268,23 @@ Eigen::Matrix4f Ferns::findFrame(
             int(vertSmall.at<Eigen::Vector4f>(
                     conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2) *
                 1000.0f) < maxDepth) {
-          Eigen::Vector4f worldRawPoint = currPose *
-              Eigen::Vector4f(vertSmall.at<Eigen::Vector4f>(
+          Eigen::Vector4d worldRawPoint = T_wc *
+              Eigen::Vector4d(vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0),
                               vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1),
                               vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2),
-                              1.0f);
+                              1.0);
 
-          Eigen::Vector4f worldModelPoint = estPose *
-              Eigen::Vector4f(vertSmall.at<Eigen::Vector4f>(
+          Eigen::Vector4d worldModelPoint = T_wc_est *
+              Eigen::Vector4d(vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0),
                               vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1),
                               vertSmall.at<Eigen::Vector4f>(
                                   conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2),
-                              1.0f);
+                              1.0);
 
           constraints.push_back(SurfaceConstraint(worldRawPoint, worldModelPoint));
         }
@@ -298,14 +294,14 @@ Eigen::Matrix4f Ferns::findFrame(
 
   delete frame;
 
-  return estPose;
+  return T_wc_est;
 }
 
 float Ferns::photometricCheck(
     const Img<Eigen::Vector4f>& vertSmall,
     const Img<Eigen::Matrix<uint8_t, 3, 1>>& imgSmall,
-    const Eigen::Matrix4f& estPose,
-    const Eigen::Matrix4f& fernPose,
+    const Sophus::SE3d& T_wc_est,
+    const Sophus::SE3d& T_wc_fern,
     const uint8_t* fernRgb) {
   float cx = Intrinsics::getInstance().cx() / factor;
   float cy = Intrinsics::getInstance().cy() / factor;
@@ -317,42 +313,48 @@ float Ferns::photometricCheck(
   float photoSum = 0;
   int photoCount = 0;
 
+  const Sophus::SE3f T_fern_est_f = (T_wc_fern.inverse() * T_wc_est).cast<float>();
+
   for (int i = 0; i < num; i++) {
     if (vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2) >
             0 &&
         int(vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2) *
             1000.0f) < maxDepth) {
-      Eigen::Vector4f vertPoint = Eigen::Vector4f(
+      Eigen::Vector4f vert_est = Eigen::Vector4f(
           vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0),
           vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1),
           vertSmall.at<Eigen::Vector4f>(conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2),
           1.0f);
 
-      Eigen::Matrix4f diff = fernPose.inverse() * estPose;
+      Eigen::Vector4f vert_fern = T_fern_est_f * vert_est;
 
-      Eigen::Vector4f worldCorrPoint = diff * vertPoint;
+      Eigen::Vector2i correspondence_px(
+          (vert_fern(0) * (1 / invfx) / vert_fern(2) + cx),
+          (vert_fern(1) * (1 / invfy) / vert_fern(2) + cy));
 
-      Eigen::Vector2i correspondence(
-          (worldCorrPoint(0) * (1 / invfx) / worldCorrPoint(2) + cx),
-          (worldCorrPoint(1) * (1 / invfy) / worldCorrPoint(2) + cy));
-
-      if (correspondence(0) >= 0 && correspondence(1) >= 0 && correspondence(0) < width &&
-          correspondence(1) < height &&
-          (imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(0) > 0 ||
-           imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(1) > 0 ||
-           imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(2) > 0)) {
-        photoSum += abs(
-            (int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(0) -
-            (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
-                conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0));
-        photoSum += abs(
-            (int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(1) -
-            (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
-                conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1));
-        photoSum += abs(
-            (int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence(1), correspondence(0))(2) -
-            (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
-                conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2));
+      if (correspondence_px(0) >= 0 && correspondence_px(1) >= 0 && correspondence_px(0) < width &&
+          correspondence_px(1) < height &&
+          (imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence_px(1), correspondence_px(0))(0) >
+               0 ||
+           imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence_px(1), correspondence_px(0))(1) >
+               0 ||
+           imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(correspondence_px(1), correspondence_px(0))(2) >
+               0)) {
+        photoSum +=
+            abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    correspondence_px(1), correspondence_px(0))(0) -
+                (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    conservatory.at(i).pos(1), conservatory.at(i).pos(0))(0));
+        photoSum +=
+            abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    correspondence_px(1), correspondence_px(0))(1) -
+                (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    conservatory.at(i).pos(1), conservatory.at(i).pos(0))(1));
+        photoSum +=
+            abs((int)imgFern.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    correspondence_px(1), correspondence_px(0))(2) -
+                (int)imgSmall.at<Eigen::Matrix<uint8_t, 3, 1>>(
+                    conservatory.at(i).pos(1), conservatory.at(i).pos(0))(2));
         photoCount++;
       }
     }

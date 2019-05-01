@@ -26,16 +26,17 @@ Deformation::Deformation()
       sampleProgram(loadProgramGeomFromFile("sample.vert", "sample.geom")),
       bufferSize(1024), // max nodes basically
       count(0),
-      vertices(new Eigen::Vector4f[bufferSize]),
-      graphPosePoints(new std::vector<Eigen::Vector3f>),
+      rawSampledNodes_w(new Eigen::Vector4f[bufferSize]),
+      graphPosePoints(new std::vector<Eigen::Vector3d>),
       lastDeformTime(0) {
   // x, y, z and init time
-  memset(&vertices[0], 0, bufferSize);
+  memset(&rawSampledNodes_w[0], 0, bufferSize);
 
   glGenTransformFeedbacks(1, &fid);
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(Eigen::Vector4f), &vertices[0], GL_STREAM_DRAW);
+  glBufferData(
+      GL_ARRAY_BUFFER, bufferSize * sizeof(Eigen::Vector4f), &rawSampledNodes_w[0], GL_STREAM_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   sampleProgram->Bind();
@@ -52,7 +53,7 @@ Deformation::Deformation()
 }
 
 Deformation::~Deformation() {
-  delete[] vertices;
+  delete[] rawSampledNodes_w;
   glDeleteTransformFeedbacks(1, &fid);
   glDeleteBuffers(1, &vbo);
   glDeleteQueries(1, &countQuery);
@@ -68,8 +69,8 @@ void Deformation::addConstraint(const Constraint& constraint) {
 }
 
 void Deformation::addConstraint(
-    const Eigen::Vector4f& src,
-    const Eigen::Vector4f& target,
+    const Eigen::Vector4d& src,
+    const Eigen::Vector4d& target,
     const uint64_t& srcTime,
     const uint64_t& targetTime,
     const bool pinConstraints) {
@@ -87,31 +88,31 @@ bool Deformation::constrain(
     std::vector<float>& rawGraph,
     int time,
     const bool fernMatch,
-    std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>>& poseGraph,
+    std::vector<std::pair<uint64_t, Sophus::SE3d>>& t_T_wc,
     const bool relaxGraph,
     std::vector<Constraint>* newRelativeCons) {
   if (def.isInit()) {
-    std::vector<unsigned long long int> times;
-    std::vector<Eigen::Matrix4f> poses;
-    std::vector<Eigen::Matrix4f*> rawPoses;
+    std::vector<uint64_t> times;
+    std::vector<Sophus::SE3d> T_wcs;
+    std::vector<Sophus::SE3d*> T_wc_ptrs;
 
     // Deform the set of ferns
     for (size_t i = 0; i < ferns.size(); i++) {
       times.push_back(ferns.at(i)->srcTime);
-      poses.push_back(ferns.at(i)->pose);
-      rawPoses.push_back(&ferns.at(i)->pose);
+      T_wcs.push_back(ferns.at(i)->T_wc);
+      T_wc_ptrs.push_back(&ferns.at(i)->T_wc);
     }
 
     if (fernMatch) {
       // Also apply to the current full pose graph (this might be silly :D)
-      for (size_t i = 0; i < poseGraph.size(); i++) {
-        times.push_back(poseGraph.at(i).first);
-        poses.push_back(poseGraph.at(i).second);
-        rawPoses.push_back(&poseGraph.at(i).second);
+      for (size_t i = 0; i < t_T_wc.size(); i++) {
+        times.push_back(t_T_wc.at(i).first);
+        T_wcs.push_back(t_T_wc.at(i).second);
+        T_wc_ptrs.push_back(&t_T_wc.at(i).second);
       }
     }
 
-    def.setPosesSeq(&times, poses);
+    def.setPosesSeq(&times, T_wcs);
 
     int originalPointPool = pointPool.size();
 
@@ -136,7 +137,7 @@ bool Deformation::constrain(
         def.addRelativeConstraint(
             constraints.at(i).srcPointPoolId, constraints.at(i).tarPointPoolId);
       } else {
-        Eigen::Vector3f targetPoint = constraints.at(i).target;
+        Eigen::Vector3d targetPoint = constraints.at(i).target;
         def.addConstraint(constraints.at(i).srcPointPoolId, targetPoint);
       }
     }
@@ -149,7 +150,7 @@ bool Deformation::constrain(
     bool poseUpdated = false;
 
     if (!fernMatch || (fernMatch && optimised && meanConsError < 0.0003 && error < 0.12)) {
-      def.applyGraphToPoses(rawPoses);
+      def.applyGraphToPoses(T_wc_ptrs);
 
       def.applyGraphToVertices();
 
@@ -170,15 +171,18 @@ bool Deformation::constrain(
       }
 
       std::vector<GraphNode*>& graphNodes = def.getGraph();
-      std::vector<unsigned long long int> graphTimes = def.getGraphTimes();
+      std::vector<uint64_t> graphTimes = def.getGraphTimes();
 
       // 16 floats per node...
       rawGraph.resize(graphNodes.size() * 16);
 
       for (size_t i = 0; i < graphNodes.size(); i++) {
-        memcpy(&rawGraph.at(i * 16), graphNodes.at(i)->position.data(), sizeof(float) * 3);
-        memcpy(&rawGraph.at(i * 16 + 3), graphNodes.at(i)->rotation.data(), sizeof(float) * 9);
-        memcpy(&rawGraph.at(i * 16 + 12), graphNodes.at(i)->translation.data(), sizeof(float) * 3);
+        const Eigen::Vector3f position = graphNodes.at(i)->position.cast<float>();
+        const Eigen::Matrix3f rotation = graphNodes.at(i)->rotation.cast<float>();
+        const Eigen::Vector3f translation = graphNodes.at(i)->translation.cast<float>();
+        memcpy(&rawGraph.at(i * 16), position.data(), sizeof(float) * 3);
+        memcpy(&rawGraph.at(i * 16 + 3), rotation.data(), sizeof(float) * 9);
+        memcpy(&rawGraph.at(i * 16 + 12), translation.data(), sizeof(float) * 3);
         rawGraph.at(i * 16 + 15) = (float)graphTimes.at(i);
       }
 
@@ -201,21 +205,19 @@ bool Deformation::constrain(
 }
 
 void Deformation::sampleGraphFrom(Deformation& other) {
-  Eigen::Vector4f* otherVerts = other.getVertices();
+  Eigen::Vector4f* otherRawSampledNodes_w = other.getRawSampledNodes_w();
 
-  int sampleRate = 5;
+  constexpr int sampleRate = 5;
 
   if (other.getCount() / sampleRate > def.k) {
     for (int i = 0; i < other.getCount(); i += sampleRate) {
-      Eigen::Vector3f newPoint = otherVerts[i].head<3>();
+      graphPosePoints->push_back(otherRawSampledNodes_w[i].head<3>().cast<double>());
 
-      graphPosePoints->push_back(newPoint);
-
-      if (i > 0 && otherVerts[i](3) < graphPoseTimes.back()) {
+      if (i > 0 && otherRawSampledNodes_w[i](3) < graphPoseTimes.back()) {
         assert(false && "Assumption failed");
       }
 
-      graphPoseTimes.push_back(otherVerts[i](3));
+      graphPoseTimes.push_back(otherRawSampledNodes_w[i](3));
     }
 
     def.initialiseGraph(graphPosePoints, &graphPoseTimes);
@@ -280,20 +282,18 @@ void Deformation::sampleGraphModel(const std::pair<GLuint, GLuint>& model) {
   if ((int)count > def.k) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Eigen::Vector4f) * count, vertices);
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Eigen::Vector4f) * count, rawSampledNodes_w);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     for (size_t i = 0; i < count; i++) {
-      Eigen::Vector3f newPoint = vertices[i].head<3>();
+      graphPosePoints->push_back(rawSampledNodes_w[i].head<3>().cast<double>());
 
-      graphPosePoints->push_back(newPoint);
-
-      if (i > 0 && vertices[i](3) < graphPoseTimes.back()) {
+      if (i > 0 && rawSampledNodes_w[i](3) < graphPoseTimes.back()) {
         assert(false && "Assumption failed");
       }
 
-      graphPoseTimes.push_back(vertices[i](3));
+      graphPoseTimes.push_back(rawSampledNodes_w[i](3));
     }
 
     def.initialiseGraph(graphPosePoints, &graphPoseTimes);

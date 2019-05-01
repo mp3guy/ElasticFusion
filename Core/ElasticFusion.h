@@ -64,17 +64,15 @@ class ElasticFusion {
    * @param rgb uint8_t row major order
    * @param depth uint16_t z-depth in millimeters, invalid depths are 0
    * @param timestamp nanoseconds (actually only used for the output poses, not important otherwise)
-   * @param inPose optional input SE3 pose (if provided, we don't attempt to perform tracking)
    * @param weightMultiplier optional full frame fusion weight
-   * @param bootstrap if true, use inPose as a pose guess rather than replacement
+   * @param T_wc optional input SE3 pose (if provided, we don't attempt to perform tracking)
    */
   void processFrame(
       const uint8_t* rgb,
       const uint16_t* depth,
       const int64_t& timestamp,
-      const Eigen::Matrix4f* inPose = 0,
-      const float weightMultiplier = 1.f,
-      const bool bootstrap = false);
+      const float weightMultiplier,
+      const Sophus::SE3d* in_T_wc = 0);
 
   /**
    * Predicts the current view of the scene, updates the [vertex/normal/image]Tex() members
@@ -218,7 +216,7 @@ class ElasticFusion {
    * The current global camera pose estimate
    * @return SE3 pose
    */
-  const Eigen::Matrix4f& getCurrPose();
+  const Sophus::SE3d& get_T_wc();
 
   /**
    * The number of local deformations that have occurred
@@ -283,9 +281,7 @@ class ElasticFusion {
 
   void processFerns();
 
-  Eigen::Vector3f rodrigues2(const Eigen::Matrix3f& matrix);
-
-  Eigen::Matrix4f currPose;
+  Sophus::SE3d T_wc_curr;
 
   int tick;
   const int timeDelta;
@@ -301,8 +297,8 @@ class ElasticFusion {
   std::vector<PoseMatch> poseMatches;
   std::vector<Deformation::Constraint> relativeCons;
 
-  std::vector<std::pair<unsigned long long int, Eigen::Matrix4f>> poseGraph;
-  std::vector<unsigned long long int> poseLogTimes;
+  std::vector<std::pair<uint64_t, Sophus::SE3d>> t_T_wc;
+  std::vector<uint64_t> poseLogTimes;
 
   Img<Eigen::Matrix<uint8_t, 3, 1>> imageBuff;
   Img<Eigen::Vector4f> consBuff;

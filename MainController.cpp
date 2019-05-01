@@ -232,19 +232,18 @@ void MainController::run() {
           framesToSkip = 0;
         }
 
-        Eigen::Matrix4f* currentPose = 0;
+        Sophus::SE3d* T_wc = 0;
 
         if (groundTruthOdometry) {
-          currentPose = new Eigen::Matrix4f;
-          currentPose->setIdentity();
-          *currentPose = groundTruthOdometry->getTransformation(logReader->timestamp);
+          T_wc = new Sophus::SE3d(
+              groundTruthOdometry->getTransformation(logReader->timestamp).cast<double>());
         }
 
         eFusion->processFrame(
-            logReader->rgb, logReader->depth, logReader->timestamp, currentPose, weightMultiplier);
+            logReader->rgb, logReader->depth, logReader->timestamp, weightMultiplier, T_wc);
 
-        if (currentPose) {
-          delete currentPose;
+        if (T_wc) {
+          delete T_wc;
         }
 
         if (frameskip && Stopwatch::getInstance().getTimings().at("Run") > 1000.f / 30.f) {
@@ -260,17 +259,17 @@ void MainController::run() {
     if (gui->followPose->Get()) {
       pangolin::OpenGlMatrix mv;
 
-      Eigen::Matrix4f currPose = eFusion->getCurrPose();
-      Eigen::Matrix3f currRot = currPose.topLeftCorner(3, 3);
+      Eigen::Matrix4f T_wc = eFusion->get_T_wc().matrix().cast<float>();
+      Eigen::Matrix3f R_wc = T_wc.topLeftCorner(3, 3);
 
-      Eigen::Quaternionf currQuat(currRot);
+      Eigen::Quaternionf currQuat(R_wc);
       Eigen::Vector3f forwardVector(0, 0, 1);
       Eigen::Vector3f upVector(0, iclnuim ? 1 : -1, 0);
 
       Eigen::Vector3f forward = (currQuat * forwardVector).normalized();
       Eigen::Vector3f up = (currQuat * upVector).normalized();
 
-      Eigen::Vector3f eye(currPose(0, 3), currPose(1, 3), currPose(2, 3));
+      Eigen::Vector3f eye(T_wc(0, 3), T_wc(1, 3), T_wc(2, 3));
 
       eye -= forward;
 
@@ -311,7 +310,7 @@ void MainController::run() {
       gui->inLog.Log(eFusion->getModelToModel().lastICPCount, icpCountThresh);
     }
 
-    Eigen::Matrix4f pose = eFusion->getCurrPose();
+    const Eigen::Matrix4f T_wc = eFusion->get_T_wc().matrix().cast<float>();
 
     if (gui->drawRawCloud->Get() || gui->drawFilteredCloud->Get()) {
       eFusion->computeFeedbackBuffers();
@@ -322,7 +321,7 @@ void MainController::run() {
           .at(FeedbackBuffer::RAW)
           ->render(
               gui->s_cam.GetProjectionModelViewMatrix(),
-              pose,
+              T_wc,
               gui->drawNormals->Get(),
               gui->drawColors->Get());
     }
@@ -332,7 +331,7 @@ void MainController::run() {
           .at(FeedbackBuffer::FILTERED)
           ->render(
               gui->s_cam.GetProjectionModelViewMatrix(),
-              pose,
+              T_wc,
               gui->drawNormals->Get(),
               gui->drawColors->Get());
     }
@@ -372,7 +371,7 @@ void MainController::run() {
     } else {
       glColor3f(1, 0, 1);
     }
-    gui->drawFrustum(pose);
+    gui->drawFrustum(T_wc);
     glColor3f(1, 1, 1);
 
     if (gui->drawFerns->Get()) {
@@ -381,7 +380,7 @@ void MainController::run() {
         if ((int)i == eFusion->getFerns().lastClosest)
           continue;
 
-        gui->drawFrustum(eFusion->getFerns().frames.at(i)->pose);
+        gui->drawFrustum(eFusion->getFerns().frames.at(i)->T_wc.cast<float>().matrix());
       }
       glColor3f(1, 1, 1);
     }
@@ -407,7 +406,10 @@ void MainController::run() {
 
     if (eFusion->getFerns().lastClosest != -1) {
       glColor3f(1, 0, 0);
-      gui->drawFrustum(eFusion->getFerns().frames.at(eFusion->getFerns().lastClosest)->pose);
+      gui->drawFrustum(eFusion->getFerns()
+                           .frames.at(eFusion->getFerns().lastClosest)
+                           ->T_wc.cast<float>()
+                           .matrix());
       glColor3f(1, 1, 1);
     }
 

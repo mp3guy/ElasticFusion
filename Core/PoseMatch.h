@@ -28,21 +28,21 @@ class PoseMatch {
   PoseMatch(
       int firstId,
       int secondId,
-      const Eigen::Matrix4f& first,
-      const Eigen::Matrix4f& second,
+      const Sophus::SE3d& T_wc_first,
+      const Sophus::SE3d& T_wc_second,
       const std::vector<Ferns::SurfaceConstraint>& constraints,
       const bool& fern)
       : firstId(firstId),
         secondId(secondId),
-        first(first),
-        second(second),
+        T_wc_first(T_wc_first),
+        T_wc_second(T_wc_second),
         constraints(constraints),
         fern(fern) {}
 
   int firstId;
   int secondId;
-  Eigen::Matrix4f first;
-  Eigen::Matrix4f second;
+  Sophus::SE3d T_wc_first;
+  Sophus::SE3d T_wc_second;
   std::vector<Ferns::SurfaceConstraint> constraints;
   bool fern;
 };

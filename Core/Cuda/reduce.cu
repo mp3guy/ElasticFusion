@@ -400,8 +400,6 @@ void icpStep(
   residual_host[1] = host_data[28];
 }
 
-#define FLT_EPSILON ((float)1.19209290E-07F)
-
 struct RGBReduction {
   PtrStepSz<DataTerm> corresImg;
 
@@ -429,7 +427,7 @@ struct RGBReduction {
     if (found_coresp) {
       float w = sigma + std::abs(corresp.diff);
 
-      w = w > FLT_EPSILON ? 1.0f / w : 1.0f;
+      w = w > 1.19209290E-07F ? 1.0f / w : 1.0f;
 
       // Signals RGB only tracking, so we should only
       if (sigma == -1) {

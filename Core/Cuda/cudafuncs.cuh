@@ -159,12 +159,6 @@ void projectToPointCloud(
 
 void pyrDown(const DeviceArray2D<uint16_t>& src, DeviceArray2D<uint16_t>& dst);
 
-void pyrDown(
-    const cudaArray_t& src,
-    const size_t srcWidth,
-    const size_t srcHeight,
-    DeviceArray2D<uint16_t>& dst);
-
 void pyrDownGaussF(const DeviceArray2D<float>& src, DeviceArray2D<float>& dst);
 
 void pyrDownUcharGauss(const DeviceArray2D<uint8_t>& src, DeviceArray2D<uint8_t>& dst);

@@ -55,7 +55,6 @@
 #include "operators.cuh"
 
 texture<uchar4, 2, cudaReadModeElementType> uchar4Tex;
-texture<uint16_t, 2, cudaReadModeElementType> uint16Tex;
 texture<float4, 2, cudaReadModeElementType> float4Tex0;
 texture<float4, 2, cudaReadModeElementType> float4Tex1;
 
@@ -105,66 +104,6 @@ void pyrDown(const DeviceArray2D<uint16_t>& src, DeviceArray2D<uint16_t>& dst) {
 
   pyrDownGaussKernel<<<grid, block>>>(src, dst, sigma_color);
   cudaSafeCall(cudaGetLastError());
-}
-
-__global__ void pyrDownGaussKernelTex(
-    const int srcWidth,
-    const int srcHeight,
-    PtrStepSz<uint16_t> dst,
-    float sigma_color) {
-  int x = blockIdx.x * blockDim.x + threadIdx.x;
-  int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-  if (x >= dst.cols || y >= dst.rows)
-    return;
-
-  const int D = 5;
-
-  const int center = tex2D(uint16Tex, 2 * x, 2 * y);
-
-  int x_mi = max(0, 2 * x - D / 2) - 2 * x;
-  int y_mi = max(0, 2 * y - D / 2) - 2 * y;
-
-  int x_ma = min(srcWidth, 2 * x - D / 2 + D) - 2 * x;
-  int y_ma = min(srcHeight, 2 * y - D / 2 + D) - 2 * y;
-
-  float sum = 0;
-  float wall = 0;
-
-  float weights[] = {0.375f, 0.25f, 0.0625f};
-
-  for (int yi = y_mi; yi < y_ma; ++yi)
-    for (int xi = x_mi; xi < x_ma; ++xi) {
-      int val = tex2D(uint16Tex, 2 * x + xi, 2 * y + yi);
-
-      if (abs(val - center) < 3 * sigma_color) {
-        sum += val * weights[abs(xi)] * weights[abs(yi)];
-        wall += weights[abs(xi)] * weights[abs(yi)];
-      }
-    }
-
-  dst.ptr(y)[x] = static_cast<int>(sum / wall);
-}
-
-void pyrDown(
-    const cudaArray_t& src,
-    const size_t srcWidth,
-    const size_t srcHeight,
-    DeviceArray2D<uint16_t>& dst) {
-  dst.create(srcHeight / 2, srcWidth / 2);
-
-  dim3 block(32, 8);
-  dim3 grid(getGridDim(dst.cols(), block.x), getGridDim(dst.rows(), block.y));
-
-  constexpr float sigma_color = 30.0f;
-
-  cudaSafeCall(cudaBindTextureToArray(uint16Tex, src));
-
-  pyrDownGaussKernelTex<<<grid, block>>>(srcWidth, srcHeight, dst, sigma_color);
-
-  cudaSafeCall(cudaGetLastError());
-
-  cudaSafeCall(cudaUnbindTexture(uchar4Tex));
 }
 
 __global__ void computeVmapKernel(

@@ -123,12 +123,18 @@ void RGBDOdometry::initICP(GPUTexture* filteredDepth, const float depthCutoff) {
 
   cudaGraphicsMapResources(1, &filteredDepth->cudaRes);
   cudaGraphicsSubResourceGetMappedArray(&textPtr, filteredDepth->cudaRes, 0, 0);
-
-  pyrDown(textPtr, depth_tmp[0].cols(), depth_tmp[0].rows(), depth_tmp[1]);
-
+  cudaMemcpy2DFromArray(
+      depth_tmp[0].ptr(0),
+      depth_tmp[0].step(),
+      textPtr,
+      0,
+      0,
+      depth_tmp[0].colsBytes(),
+      depth_tmp[0].rows(),
+      cudaMemcpyDeviceToDevice);
   cudaGraphicsUnmapResources(1, &filteredDepth->cudaRes);
 
-  for (int i = 2; i < NUM_PYRS; ++i) {
+  for (int i = 1; i < NUM_PYRS; ++i) {
     pyrDown(depth_tmp[i - 1], depth_tmp[i]);
   }
 

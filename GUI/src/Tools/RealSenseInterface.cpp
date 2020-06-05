@@ -144,7 +144,7 @@ void RealSenseInterface::setAutoWhiteBalance(bool value)
 {
     auto sensor = dev->first<rs2::sensor>();
     try {
-        return sensor.set_option(rs2_option::RS2_OPTION_ENABLE_AUTO_EXPOSURE, value);
+        sensor.set_option(rs2_option::RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE, value);
     } catch (rs2::invalid_value_error &e) {
         std::cerr << "This camera does not support Auto White Balance option." << std::endl;
     }

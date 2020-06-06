@@ -21,15 +21,23 @@ elif [[ $version == *"16.04"* ]] ; then
     wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
     sudo dpkg -i cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
     rm cuda-repo-ubuntu1604_8.0.44-1_amd64.deb
-    sudo add-apt-repository ppa:openjdk-r/ppa 
+    sudo add-apt-repository ppa:openjdk-r/ppa
     sudo apt-get update
     sudo apt-get install cuda-8-0
+elif [[ $version == *"18.04"* ]] ; then
+    wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+    sudo dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+    rm cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+    sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+    sudo add-apt-repository ppa:openjdk-r/ppa
+    sudo apt-get update
+    sudo apt-get install cuda-10-0
 else
-    echo "Don't use this on anything except 14.04, 15.04, or 16.04"
+    echo "Don't use this on anything except 14.04, 15.04, 16.04 or 18.04"
     exit
 fi
 
-sudo apt-get install -y cmake-qt-gui git build-essential libusb-1.0-0-dev libudev-dev openjdk-7-jdk freeglut3-dev libglew-dev libsuitesparse-dev libeigen3-dev zlib1g-dev libjpeg-dev
+sudo apt-get install -y cmake-qt-gui git build-essential libusb-1.0-0-dev libudev-dev openjdk-8-jdk freeglut3-dev libglew-dev libsuitesparse-dev libeigen3-dev zlib1g-dev libjpeg-dev
 
 #Installing Pangolin
 git clone https://github.com/stevenlovegrove/Pangolin.git

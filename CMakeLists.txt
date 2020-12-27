@@ -40,9 +40,7 @@ file(GLOB tools_srcs Tools/*.cpp Tools/*.h Tools/*.cu Tools/*.cuh)
 add_definitions(-Dlinux=1)
 add_definitions(-DEIGEN_MAX_ALIGN_BYTES=0)
 add_definitions(-DEIGEN_MAX_STATIC_ALIGN_BYTES=0)
-
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+add_definitions(-DSHADER_DIR=${efusion_SHADER_DIR})
 
 add_subdirectory(Core)
 

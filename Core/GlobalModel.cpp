@@ -679,7 +679,9 @@ Eigen::Vector4f* GlobalModel::downloadMap() {
 
   Eigen::Vector4f* vertices = new Eigen::Vector4f[count * 3];
 
-  memset(&vertices[0], 0, count * Vertex::SIZE);
+  for(uint32_t i = 0; i < count * 3; i++) {
+    vertices[i] = Eigen::Vector4f::Zero();
+  }
 
   GLuint downloadVbo;
 

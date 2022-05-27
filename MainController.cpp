@@ -69,7 +69,7 @@ MainController::MainController(int argc, char* argv[])
   confidence = 10.0f;
   depth = 3.0f;
   icp = 10.0f;
-  icpErrThresh = 5e-05;
+  icpErrThresh = 4e-05;
   covThresh = 1e-05;
   photoThresh = 115;
   fernThresh = 0.3095f;

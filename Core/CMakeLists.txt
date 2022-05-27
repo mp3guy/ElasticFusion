@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6.0)
+cmake_minimum_required(VERSION 3.22)
 
 project(libefusion)
 
@@ -25,7 +25,7 @@ endforeach(NVCC_ARCH)
 include("${CMAKE_MODULE_PATH}/CudaComputeTargetFlags.cmake")
 APPEND_TARGET_ARCH_FLAGS()
 
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;--expt-relaxed-constexpr")
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}  "-Xcompiler;-fPIC;--expt-relaxed-constexpr;--disable-warnings")
 
 CUDA_COMPILE(cuda_objs ${cuda})
 

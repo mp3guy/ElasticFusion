@@ -30,7 +30,9 @@ Deformation::Deformation()
       graphPosePoints(new std::vector<Eigen::Vector3d>),
       lastDeformTime(0) {
   // x, y, z and init time
-  memset(&rawSampledNodes_w[0], 0, bufferSize);
+  for (int i = 0; i < bufferSize; i++) {
+    rawSampledNodes_w[i] = Eigen::Vector4f::Zero();
+  }
 
   glGenTransformFeedbacks(1, &fid);
   glGenBuffers(1, &vbo);

@@ -100,12 +100,16 @@ class Ferns {
 
       if (verts) {
         this->initVerts = new Eigen::Vector4f[numPixels];
-        memcpy(this->initVerts, verts, numPixels * sizeof(Eigen::Vector4f));
+        for (int i = 0; i < numPixels; i++) {
+          this->initVerts[i] = verts[i];
+        }
       }
 
       if (norms) {
         this->initNorms = new Eigen::Vector4f[numPixels];
-        memcpy(this->initNorms, norms, numPixels * sizeof(Eigen::Vector4f));
+        for (int i = 0; i < numPixels; i++) {
+          this->initNorms[i] = norms[i];
+        }
       }
     }
 

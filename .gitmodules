@@ -1,0 +1,12 @@
+[submodule "third-party/Pangolin"]
+	path = third-party/Pangolin
+	url = https://github.com/stevenlovegrove/Pangolin.git
+[submodule "third-party/OpenNI2"]
+	path = third-party/OpenNI2
+	url = https://github.com/occipital/OpenNI2.git
+[submodule "third-party/Eigen"]
+	path = third-party/Eigen
+	url = https://github.com/eigenteam/eigen-git-mirror.git
+[submodule "third-party/Sophus"]
+	path = third-party/Sophus
+	url = https://github.com/strasdat/Sophus.git

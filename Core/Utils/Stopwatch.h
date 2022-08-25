@@ -17,18 +17,17 @@
  *
  */
 
-#ifndef STOPWATCH_H_
-#define STOPWATCH_H_
-
-#include <stdio.h>
-#include <stdlib.h>
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <unistd.h>
+
+#include <string.h>
+#include <sys/time.h>
 #include <iostream>
 #include <map>
 #include <string>
@@ -36,15 +35,12 @@
 
 #define SEND_INTERVAL_MS 10000
 
-typedef uint8_t stopwatchPacketType;
-
 #ifndef DISABLE_STOPWATCH
-#define STOPWATCH(name, expression)                                                           \
-  do {                                                                                        \
-    const uint64_t startTime = Stopwatch::getInstance().getCurrentSystemTime(); \
-    expression const uint64_t endTime =                                         \
-        Stopwatch::getInstance().getCurrentSystemTime();                                      \
-    Stopwatch::getInstance().addStopwatchTiming(name, endTime - startTime);                   \
+#define STOPWATCH(name, expression)                                                      \
+  do {                                                                                   \
+    const uint64_t startTime = Stopwatch::getInstance().getCurrentSystemTime();          \
+    expression const uint64_t endTime = Stopwatch::getInstance().getCurrentSystemTime(); \
+    Stopwatch::getInstance().addStopwatchTiming(name, endTime - startTime);              \
   } while (false)
 
 #define TICK(name)                                                                        \
@@ -74,7 +70,7 @@ class Stopwatch {
 
   void addStopwatchTiming(std::string name, uint64_t duration) {
     if (duration > 0) {
-      timings[name] = (float)(duration) / 1000.0f;
+      timingsMs[name] = (float)(duration) / 1000.0f;
     }
   }
 
@@ -83,11 +79,11 @@ class Stopwatch {
   }
 
   const std::map<std::string, float>& getTimings() {
-    return timings;
+    return timingsMs;
   }
 
   void printAll() {
-    for (std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end();
+    for (std::map<std::string, float>::const_iterator it = timingsMs.begin(); it != timingsMs.end();
          it++) {
       std::cout << it->first << ": " << it->second << "ms" << std::endl;
     }
@@ -96,7 +92,7 @@ class Stopwatch {
   }
 
   void pulse(std::string name) {
-    timings[name] = 1;
+    timingsMs[name] = 1;
   }
 
   void sendAll() {
@@ -104,7 +100,8 @@ class Stopwatch {
 
     if ((currentSend = (clock.tv_sec * 1000000 + clock.tv_usec)) - lastSend > SEND_INTERVAL_MS) {
       int size = 0;
-      stopwatchPacketType* data = serialiseTimings(size);
+      uint8_t* data = serialiseTimings(size);
+
       sendto(sockfd, data, size, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
 
       free(data);
@@ -121,14 +118,20 @@ class Stopwatch {
   }
 
   void tick(std::string name, uint64_t start) {
-    tickTimings[name] = start;
+    ticksUs[name] = start;
   }
 
   void tock(std::string name, uint64_t end) {
-    float duration = (float)(end - tickTimings[name]) / 1000.0f;
+    tocksUs[name] = end;
 
-    if (duration > 0) {
-      timings[name] = duration;
+    const auto tickUs = ticksUs.find(name);
+
+    if (tickUs != ticksUs.end()) {
+      ticksUs.erase(name);
+      const float duration = (float)(end - tickUs->second) / 1000.0f;
+      if (duration > 0) {
+        timingsMs[name] = duration;
+      }
     }
   }
 
@@ -151,29 +154,51 @@ class Stopwatch {
     close(sockfd);
   }
 
-  stopwatchPacketType* serialiseTimings(int& packetSize) {
-    packetSize = sizeof(int) + sizeof(uint64_t);
+  uint8_t* serialiseTimings(int& packetSizeBytes) {
+    // Packet structure: [int32_t packetSizeBytes, uint64_t signature, then for each entry]
+    packetSizeBytes = sizeof(int) + sizeof(uint64_t);
 
-    for (std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end();
-         it++) {
-      packetSize += it->first.length() + 1 + sizeof(float);
-    }
+    // For each entry, length + 1 to include the null terminator for the strings
+    auto sumUpMapSizeBytes = [&](const auto& nameValueMap) {
+      for (const auto& [name, value] : nameValueMap) {
+        packetSizeBytes += sizeof(uint8_t) + (name.length() + 1) + sizeof(decltype(value));
+      }
+    };
 
-    int* dataPacket = (int*)calloc(packetSize, sizeof(uint8_t));
+    sumUpMapSizeBytes(timingsMs);
+    sumUpMapSizeBytes(ticksUs);
+    sumUpMapSizeBytes(tocksUs);
 
-    dataPacket[0] = packetSize * sizeof(uint8_t);
+    int* dataPointer = (int*)calloc(packetSizeBytes, sizeof(uint8_t));
 
-    *((uint64_t*)&dataPacket[1]) = signature;
+    // First byte in the packet is the size in bytes of all data
+    dataPointer[0] = packetSizeBytes * sizeof(uint8_t);
 
-    float* valuePointer = (float*)&((uint64_t*)&dataPacket[1])[1];
+    // Signature unique to each process
+    *((uint64_t*)&dataPointer[1]) = signature;
 
-    for (std::map<std::string, float>::const_iterator it = timings.begin(); it != timings.end();
-         it++) {
-      valuePointer = (float*)mempcpy(valuePointer, it->first.c_str(), it->first.length() + 1);
-      *valuePointer++ = it->second;
-    }
+    uint8_t* interleavedTypeNameValuePointer = (uint8_t*)&((uint64_t*)&dataPointer[1])[1];
 
-    return (stopwatchPacketType*)dataPacket;
+    auto serializeMap = [&](const uint8_t type, const auto& nameValueMap) {
+      for (const auto& [name, value] : nameValueMap) {
+        // Write the type of measurement
+        memcpy(interleavedTypeNameValuePointer++, &type, sizeof(uint8_t));
+
+        // Write the name
+        memcpy(interleavedTypeNameValuePointer, name.c_str(), name.length() + 1);
+        interleavedTypeNameValuePointer += name.length() + 1;
+
+        // Write the value
+        memcpy(interleavedTypeNameValuePointer, &value, sizeof(decltype(value)));
+        interleavedTypeNameValuePointer += sizeof(decltype(value));
+      }
+    };
+
+    serializeMap(0, timingsMs);
+    serializeMap(1, ticksUs);
+    serializeMap(2, tocksUs);
+
+    return (uint8_t*)dataPointer;
   }
 
   timeval clock;
@@ -181,8 +206,7 @@ class Stopwatch {
   uint64_t signature;
   int sockfd;
   struct sockaddr_in servaddr;
-  std::map<std::string, float> timings;
-  std::map<std::string, uint64_t> tickTimings;
+  std::map<std::string, float> timingsMs;
+  std::map<std::string, uint64_t> tocksUs;
+  std::map<std::string, uint64_t> ticksUs;
 };
-
-#endif /* STOPWATCH_H_ */

@@ -127,7 +127,6 @@ class Stopwatch {
     const auto tickUs = ticksUs.find(name);
 
     if (tickUs != ticksUs.end()) {
-      ticksUs.erase(name);
       const float duration = (float)(end - tickUs->second) / 1000.0f;
       if (duration > 0) {
         timingsMs[name] = duration;
@@ -169,15 +168,15 @@ class Stopwatch {
     sumUpMapSizeBytes(ticksUs);
     sumUpMapSizeBytes(tocksUs);
 
-    int* dataPointer = (int*)calloc(packetSizeBytes, sizeof(uint8_t));
+    uint8_t* dataPointer = (uint8_t*)calloc(packetSizeBytes, sizeof(uint8_t));
 
     // First byte in the packet is the size in bytes of all data
-    dataPointer[0] = packetSizeBytes * sizeof(uint8_t);
+    memcpy(dataPointer, &packetSizeBytes, sizeof(int));
 
     // Signature unique to each process
-    *((uint64_t*)&dataPointer[1]) = signature;
+    memcpy(dataPointer + sizeof(int), &signature, sizeof(uint64_t));
 
-    uint8_t* interleavedTypeNameValuePointer = (uint8_t*)&((uint64_t*)&dataPointer[1])[1];
+    uint8_t* interleavedTypeNameValuePointer = dataPointer + sizeof(int) + sizeof(uint64_t);
 
     auto serializeMap = [&](const uint8_t type, const auto& nameValueMap) {
       for (const auto& [name, value] : nameValueMap) {
@@ -198,7 +197,7 @@ class Stopwatch {
     serializeMap(1, ticksUs);
     serializeMap(2, tocksUs);
 
-    return (uint8_t*)dataPointer;
+    return dataPointer;
   }
 
   timeval clock;

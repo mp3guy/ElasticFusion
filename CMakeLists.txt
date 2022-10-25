@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 project(ElasticFusion)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
+set(CMAKE_CXX_STANDARD 17)
 
 set(Pangolin_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/Pangolin/build/src" CACHE PATH "Pangolin build directory")
 set(OPENNI2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party/OpenNI2/Include" CACHE PATH "OpenNI2 Include directory")
@@ -41,8 +42,8 @@ add_definitions(-Dlinux=1)
 add_definitions(-DEIGEN_MAX_ALIGN_BYTES=0)
 add_definitions(-DEIGEN_MAX_STATIC_ALIGN_BYTES=0)
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11 -DSHADER_DIR=${efusion_SHADER_DIR}")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -msse2 -msse3 -Wall -DSHADER_DIR=${efusion_SHADER_DIR}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -DSHADER_DIR=${efusion_SHADER_DIR}")
 
 add_subdirectory(Core)
 

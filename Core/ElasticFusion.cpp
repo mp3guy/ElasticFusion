@@ -330,7 +330,7 @@ void ElasticFusion::processFrame(
           Eigen::MatrixXd covariance = frameToModel.getCovariance();
 
           for (int i = 0; i < 6; i++) {
-            if (covariance(i, i) > 1e-04) {
+            if (covariance(i, i) > 1e-03) {
               trackingOk = false;
               break;
             }
@@ -349,7 +349,7 @@ void ElasticFusion::processFrame(
           Eigen::MatrixXd covariance = frameToModel.getCovariance();
 
           for (int i = 0; i < 6; i++) {
-            if (covariance(i, i) > 1e-04) {
+            if (covariance(i, i) > 1e-03) {
               trackingOk = false;
               break;
             }

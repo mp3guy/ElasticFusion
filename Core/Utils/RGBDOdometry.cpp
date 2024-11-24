@@ -523,7 +523,7 @@ void RGBDOdometry::getIncrementalTransformation(
 
       if (icp && rgb) {
         double w = icpWeight;
-        lastA = dA_rgbd + w * w * dA_icp;
+        lastA = dA_rgbd + w * dA_icp;
         lastb = db_rgbd + w * db_icp;
         result = lastA.ldlt().solve(lastb);
       } else if (icp) {

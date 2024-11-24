@@ -143,6 +143,8 @@ void RGBDOdometry::initICP(GPUTexture* filteredDepth, const float depthCutoff) {
     createNMap(vmaps_curr_[i], nmaps_curr_[i]);
   }
 
+  copyVmapsTmp(vmaps_curr_[0], width, height, vmaps_tmp);
+
   cudaDeviceSynchronize();
 }
 

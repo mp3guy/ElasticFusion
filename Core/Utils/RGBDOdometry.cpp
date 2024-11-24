@@ -439,7 +439,7 @@ void RGBDOdometry::getIncrementalTransformation(
         TOCK("computeRgbResidual");
       }
 
-      float sigmaVal = std::sqrt((float)sigma / rgbSize == 0 ? 1 : rgbSize);
+      float sigmaVal = std::sqrt((float)sigma / (rgbSize == 0 ? 1 : rgbSize));
       float rgbError = std::sqrt(sigma) / (rgbSize == 0 ? 1 : rgbSize);
 
       if (rgbOnly && rgbError > lastRGBError) {

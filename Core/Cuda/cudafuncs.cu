@@ -54,9 +54,23 @@
 #include "cudafuncs.cuh"
 #include "operators.cuh"
 
-texture<uchar4, 2, cudaReadModeElementType> uchar4Tex;
-texture<float4, 2, cudaReadModeElementType> float4Tex0;
-texture<float4, 2, cudaReadModeElementType> float4Tex1;
+inline cudaError_t initTextureObjectFromArray(cudaTextureObject_t * obj, cudaArray_t cuArr)
+{
+  cudaResourceDesc resDesc;
+  memset(&resDesc, 0, sizeof(resDesc));
+  resDesc.resType = cudaResourceTypeArray;
+  resDesc.res.array.array = cuArr;
+
+  cudaTextureDesc texDesc;
+  memset(&texDesc, 0, sizeof(texDesc));
+  texDesc.normalizedCoords = false;
+  texDesc.filterMode = cudaFilterModePoint;
+  texDesc.addressMode[0] = cudaAddressModeClamp;
+  texDesc.addressMode[1] = cudaAddressModeClamp;
+  texDesc.readMode = cudaReadModeElementType;
+
+  return cudaCreateTextureObject(obj, &resDesc, &texDesc, NULL);
+}
 
 __global__ void
 pyrDownGaussKernel(const PtrStepSz<uint16_t> src, PtrStepSz<uint16_t> dst, float sigma_color) {
@@ -283,7 +297,9 @@ __global__ void copyMapsKernelTex(
     int cols,
     float* vmaps_tmp,
     PtrStepSz<float> vmap_dst,
-    PtrStep<float> nmap_dst) {
+    PtrStep<float> nmap_dst,
+    cudaTextureObject_t float4Tex0,
+    cudaTextureObject_t float4Tex1) {
   int x = threadIdx.x + blockIdx.x * blockDim.x;
   int y = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -293,7 +309,7 @@ __global__ void copyMapsKernelTex(
         vdst = make_float3(
             __int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
 
-    float4 vmap_src = tex2D(float4Tex0, x, y);
+    float4 vmap_src = tex2D<float4>(float4Tex0, x, y);
 
     vmaps_tmp[y * cols * 4 + (x * 4) + 0] = vmap_src.x;
     vmaps_tmp[y * cols * 4 + (x * 4) + 1] = vmap_src.y;
@@ -317,7 +333,7 @@ __global__ void copyMapsKernelTex(
         ndst = make_float3(
             __int_as_float(0x7fffffff), __int_as_float(0x7fffffff), __int_as_float(0x7fffffff));
 
-    float4 nmap_src = tex2D(float4Tex1, x, y);
+    float4 nmap_src = tex2D<float4>(float4Tex1, x, y);
 
     nsrc.x = nmap_src.x;
     nsrc.y = nmap_src.y;
@@ -349,14 +365,17 @@ void copyMaps(
   grid.x = getGridDim(srcWidth, block.x);
   grid.y = getGridDim(srcHeight, block.y);
 
-  cudaSafeCall(cudaBindTextureToArray(float4Tex0, vmap_src));
-  cudaSafeCall(cudaBindTextureToArray(float4Tex1, nmap_src));
+  cudaTextureObject_t float4Tex0;
+  cudaSafeCall(initTextureObjectFromArray(&float4Tex0, vmap_src));
 
-  copyMapsKernelTex<<<grid, block>>>(srcHeight, srcWidth, vmaps_tmp, vmap_dst, nmap_dst);
+  cudaTextureObject_t float4Tex1;
+  cudaSafeCall(initTextureObjectFromArray(&float4Tex1, nmap_src));
+
+  copyMapsKernelTex<<<grid, block>>>(srcHeight, srcWidth, vmaps_tmp, vmap_dst, nmap_dst, float4Tex0, float4Tex1);
   cudaSafeCall(cudaGetLastError());
 
-  cudaSafeCall(cudaUnbindTexture(float4Tex0));
-  cudaSafeCall(cudaUnbindTexture(float4Tex1));
+  cudaSafeCall(cudaDestroyTextureObject(float4Tex0));
+  cudaSafeCall(cudaDestroyTextureObject(float4Tex1));
 
   cudaSafeCall(cudaGetLastError());
 }
@@ -562,14 +581,14 @@ void verticesToDepth(DeviceArray<float>& vmap_src, DeviceArray2D<float>& dst, fl
   cudaSafeCall(cudaGetLastError());
 }
 
-__global__ void bgr2IntensityKernel(PtrStepSz<uint8_t> dst) {
+__global__ void bgr2IntensityKernel(PtrStepSz<uint8_t> dst, cudaTextureObject_t uchar4Tex) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (x >= dst.cols || y >= dst.rows)
     return;
 
-  uchar4 src = tex2D(uchar4Tex, x, y);
+  uchar4 src = tex2D<uchar4>(uchar4Tex, x, y);
 
   int value = (float)src.x * 0.114f + (float)src.y * 0.299f + (float)src.z * 0.587f;
 
@@ -580,13 +599,14 @@ void imageBGRToIntensity(cudaArray_t cuArr, DeviceArray2D<uint8_t>& dst) {
   dim3 block(32, 8);
   dim3 grid(getGridDim(dst.cols(), block.x), getGridDim(dst.rows(), block.y));
 
-  cudaSafeCall(cudaBindTextureToArray(uchar4Tex, cuArr));
+  cudaTextureObject_t uchar4Tex;
+  cudaSafeCall(initTextureObjectFromArray(&uchar4Tex, cuArr));
 
-  bgr2IntensityKernel<<<grid, block>>>(dst);
+  bgr2IntensityKernel<<<grid, block>>>(dst, uchar4Tex);
 
   cudaSafeCall(cudaGetLastError());
 
-  cudaSafeCall(cudaUnbindTexture(uchar4Tex));
+  cudaSafeCall(cudaDestroyTextureObject(uchar4Tex));
 }
 
 __constant__ float gsobel_x3x3[9];

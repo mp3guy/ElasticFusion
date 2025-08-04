@@ -143,6 +143,8 @@ void RGBDOdometry::initICP(GPUTexture* filteredDepth, const float depthCutoff) {
     createNMap(vmaps_curr_[i], nmaps_curr_[i]);
   }
 
+  copyVmapsTmp(vmaps_curr_[0], width, height, vmaps_tmp);
+
   cudaDeviceSynchronize();
 }
 
@@ -439,7 +441,7 @@ void RGBDOdometry::getIncrementalTransformation(
         TOCK("computeRgbResidual");
       }
 
-      float sigmaVal = std::sqrt((float)sigma / rgbSize == 0 ? 1 : rgbSize);
+      float sigmaVal = std::sqrt((float)sigma / (rgbSize == 0 ? 1 : rgbSize));
       float rgbError = std::sqrt(sigma) / (rgbSize == 0 ? 1 : rgbSize);
 
       if (rgbOnly && rgbError > lastRGBError) {
@@ -521,7 +523,7 @@ void RGBDOdometry::getIncrementalTransformation(
 
       if (icp && rgb) {
         double w = icpWeight;
-        lastA = dA_rgbd + w * w * dA_icp;
+        lastA = dA_rgbd + w * dA_icp;
         lastb = db_rgbd + w * db_icp;
         result = lastA.ldlt().solve(lastb);
       } else if (icp) {

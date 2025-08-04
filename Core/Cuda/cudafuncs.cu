@@ -380,6 +380,33 @@ void copyMaps(
   cudaSafeCall(cudaGetLastError());
 }
 
+__global__ void copyVmapsTmpKernel(
+    PtrStepSz<float> vmap_src,
+    int rows,
+    int cols,
+    float* vmaps_tmp) {
+
+  int x = threadIdx.x + blockIdx.x * blockDim.x;
+  int y = threadIdx.y + blockIdx.y * blockDim.y;
+  
+  if (x < cols && y < rows) {
+    vmaps_tmp[y * cols * 4 + (x * 4) + 2] = vmap_src.ptr(y + 2 * rows)[x];
+  }
+}
+
+void copyVmapsTmp(
+    DeviceArray2D<float>& vmap_src,
+    const size_t srcWidth,
+    const size_t srcHeight,
+    DeviceArray<float>& vmaps_tmp) {
+  dim3 block(32, 8);
+  dim3 grid(1, 1, 1);
+  grid.x = getGridDim(srcWidth, block.x);
+  grid.y = getGridDim(srcHeight, block.y);
+  
+  copyVmapsTmpKernel<<<grid, block>>>(vmap_src, srcHeight, srcWidth, vmaps_tmp);
+}
+
 __global__ void
 pyrDownKernelGaussF(const PtrStepSz<float> src, PtrStepSz<float> dst, float* gaussKernel) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;

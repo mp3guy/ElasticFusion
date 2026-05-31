@@ -50,47 +50,49 @@
  *  Author: Anatoly Baskeheev, Itseez Ltd, (myname.mysurname@mycompany.com)
  */
 
+#include "cuda_to_hip.h"
+
 #include "convenience.cuh"
 #include "cudafuncs.cuh"
 #include "operators.cuh"
 
 __inline__ __device__ JtJJtrSE3 warpReduceSum(JtJJtrSE3 val) {
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
-    val.aa += __shfl_down_sync(0xFFFFFFFF, val.aa, offset);
-    val.ab += __shfl_down_sync(0xFFFFFFFF, val.ab, offset);
-    val.ac += __shfl_down_sync(0xFFFFFFFF, val.ac, offset);
-    val.ad += __shfl_down_sync(0xFFFFFFFF, val.ad, offset);
-    val.ae += __shfl_down_sync(0xFFFFFFFF, val.ae, offset);
-    val.af += __shfl_down_sync(0xFFFFFFFF, val.af, offset);
-    val.ag += __shfl_down_sync(0xFFFFFFFF, val.ag, offset);
+    val.aa += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.aa, offset);
+    val.ab += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ab, offset);
+    val.ac += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ac, offset);
+    val.ad += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ad, offset);
+    val.ae += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ae, offset);
+    val.af += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.af, offset);
+    val.ag += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ag, offset);
 
-    val.bb += __shfl_down_sync(0xFFFFFFFF, val.bb, offset);
-    val.bc += __shfl_down_sync(0xFFFFFFFF, val.bc, offset);
-    val.bd += __shfl_down_sync(0xFFFFFFFF, val.bd, offset);
-    val.be += __shfl_down_sync(0xFFFFFFFF, val.be, offset);
-    val.bf += __shfl_down_sync(0xFFFFFFFF, val.bf, offset);
-    val.bg += __shfl_down_sync(0xFFFFFFFF, val.bg, offset);
+    val.bb += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bb, offset);
+    val.bc += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bc, offset);
+    val.bd += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bd, offset);
+    val.be += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.be, offset);
+    val.bf += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bf, offset);
+    val.bg += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bg, offset);
 
-    val.cc += __shfl_down_sync(0xFFFFFFFF, val.cc, offset);
-    val.cd += __shfl_down_sync(0xFFFFFFFF, val.cd, offset);
-    val.ce += __shfl_down_sync(0xFFFFFFFF, val.ce, offset);
-    val.cf += __shfl_down_sync(0xFFFFFFFF, val.cf, offset);
-    val.cg += __shfl_down_sync(0xFFFFFFFF, val.cg, offset);
+    val.cc += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cc, offset);
+    val.cd += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cd, offset);
+    val.ce += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ce, offset);
+    val.cf += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cf, offset);
+    val.cg += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cg, offset);
 
-    val.dd += __shfl_down_sync(0xFFFFFFFF, val.dd, offset);
-    val.de += __shfl_down_sync(0xFFFFFFFF, val.de, offset);
-    val.df += __shfl_down_sync(0xFFFFFFFF, val.df, offset);
-    val.dg += __shfl_down_sync(0xFFFFFFFF, val.dg, offset);
+    val.dd += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.dd, offset);
+    val.de += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.de, offset);
+    val.df += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.df, offset);
+    val.dg += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.dg, offset);
 
-    val.ee += __shfl_down_sync(0xFFFFFFFF, val.ee, offset);
-    val.ef += __shfl_down_sync(0xFFFFFFFF, val.ef, offset);
-    val.eg += __shfl_down_sync(0xFFFFFFFF, val.eg, offset);
+    val.ee += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ee, offset);
+    val.ef += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ef, offset);
+    val.eg += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.eg, offset);
 
-    val.ff += __shfl_down_sync(0xFFFFFFFF, val.ff, offset);
-    val.fg += __shfl_down_sync(0xFFFFFFFF, val.fg, offset);
+    val.ff += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ff, offset);
+    val.fg += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.fg, offset);
 
-    val.residual += __shfl_down_sync(0xFFFFFFFF, val.residual, offset);
-    val.inliers += __shfl_down_sync(0xFFFFFFFF, val.inliers, offset);
+    val.residual += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.residual, offset);
+    val.inliers += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.inliers, offset);
   }
 
   return val;
@@ -141,20 +143,20 @@ __global__ void reduceSum(JtJJtrSE3* in, JtJJtrSE3* out, int N) {
 
 __inline__ __device__ JtJJtrSO3 warpReduceSum(JtJJtrSO3 val) {
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
-    val.aa += __shfl_down_sync(0xFFFFFFFF, val.aa, offset);
-    val.ab += __shfl_down_sync(0xFFFFFFFF, val.ab, offset);
-    val.ac += __shfl_down_sync(0xFFFFFFFF, val.ac, offset);
-    val.ad += __shfl_down_sync(0xFFFFFFFF, val.ad, offset);
+    val.aa += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.aa, offset);
+    val.ab += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ab, offset);
+    val.ac += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ac, offset);
+    val.ad += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.ad, offset);
 
-    val.bb += __shfl_down_sync(0xFFFFFFFF, val.bb, offset);
-    val.bc += __shfl_down_sync(0xFFFFFFFF, val.bc, offset);
-    val.bd += __shfl_down_sync(0xFFFFFFFF, val.bd, offset);
+    val.bb += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bb, offset);
+    val.bc += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bc, offset);
+    val.bd += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.bd, offset);
 
-    val.cc += __shfl_down_sync(0xFFFFFFFF, val.cc, offset);
-    val.cd += __shfl_down_sync(0xFFFFFFFF, val.cd, offset);
+    val.cc += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cc, offset);
+    val.cd += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.cd, offset);
 
-    val.residual += __shfl_down_sync(0xFFFFFFFF, val.residual, offset);
-    val.inliers += __shfl_down_sync(0xFFFFFFFF, val.inliers, offset);
+    val.residual += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.residual, offset);
+    val.inliers += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.inliers, offset);
   }
 
   return val;
@@ -551,8 +553,8 @@ void rgbStep(
 
 __inline__ __device__ int2 warpReduceSum(int2 val) {
   for (int offset = warpSize / 2; offset > 0; offset /= 2) {
-    val.x += __shfl_down_sync(0xFFFFFFFF, val.x, offset);
-    val.y += __shfl_down_sync(0xFFFFFFFF, val.y, offset);
+    val.x += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.x, offset);
+    val.y += __shfl_down_sync(CUDA_WARP_FULL_MASK,val.y, offset);
   }
 
   return val;

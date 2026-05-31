@@ -50,6 +50,8 @@
  *  Author: Anatoly Baskeheev, Itseez Ltd, (myname.mysurname@mycompany.com)
  */
 
+#include "cuda_to_hip.h"
+
 #include "convenience.cuh"
 #include "cudafuncs.cuh"
 #include "operators.cuh"

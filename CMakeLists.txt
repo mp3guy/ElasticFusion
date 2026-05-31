@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(ElasticFusion)
 
+option(USE_HIP "Build the CUDA tracking code with HIP for AMD GPUs" OFF)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 set(CMAKE_CXX_STANDARD 17)
 
@@ -16,7 +18,9 @@ find_package(BLAS REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Pangolin 0.1 REQUIRED)
-find_package(CUDA REQUIRED)
+if(NOT USE_HIP)
+  find_package(CUDA REQUIRED)
+endif()
 find_package(OpenNI2 REQUIRED)
 find_package(SuiteSparse REQUIRED)
 
@@ -28,6 +32,26 @@ include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${OPENNI2_INCLUDE_DIR})
 include_directories(${SUITESPARSE_INCLUDE_DIRS})
 include_directories(${Sophus_INCLUDE_DIR})
+
+# On AMD the host .cpp keep their <cuda_gl_interop.h>/<cuda_runtime_api.h>/
+# <driver_types.h>/<vector_types.h> includes; the hip_compat/ shims resolve those
+# toolkit names to the CUDA-to-HIP compat header. This dir is added only under
+# USE_HIP, so the NVIDIA build is byte-for-byte unchanged. The host C++ files that
+# touch the CUDA runtime (GPUTexture, RGBDOdometry, the container layer) compile
+# with the CXX compiler, so they need USE_HIP / __HIP_PLATFORM_AMD__ defined and
+# the ROCm include path to pick up the HIP host runtime.
+if(USE_HIP)
+  if(NOT DEFINED ROCM_PATH)
+    if(DEFINED ENV{ROCM_PATH})
+      set(ROCM_PATH $ENV{ROCM_PATH})
+    else()
+      set(ROCM_PATH "/opt/rocm")
+    endif()
+  endif()
+  include_directories(BEFORE "${CMAKE_CURRENT_SOURCE_DIR}/hip_compat")
+  include_directories("${ROCM_PATH}/include")
+  add_definitions(-DUSE_HIP -D__HIP_PLATFORM_AMD__)
+endif()
 
 if(WITH_REALSENSE)
   include_directories(${REALSENSE_INCLUDE_DIR})

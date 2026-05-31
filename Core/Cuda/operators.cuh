@@ -55,6 +55,13 @@
 #ifndef CUDA_OPERATORS_CUH_
 #define CUDA_OPERATORS_CUH_
 
+// HIP's float3 is HIP_vector_type<float,3> and already ships componentwise
+// operator+ / operator- (host+device), so the project's hand-rolled versions are
+// ambiguous under hipcc. Guard them out on HIP (identical semantics); CUDA's
+// float3 has no operators so it keeps these. cross/dot/norm/normalized below are
+// NOT provided by HIP and are kept on both backends. operator*(mat33,float3)
+// takes the project's own mat33 type, so it does not collide and stays.
+#if !defined(USE_HIP) && !defined(__HIP_PLATFORM_AMD__)
 __device__ __host__ __forceinline__ float3 operator-(const float3& a, const float3& b) {
   return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
 }
@@ -62,6 +69,7 @@ __device__ __host__ __forceinline__ float3 operator-(const float3& a, const floa
 __device__ __host__ __forceinline__ float3 operator+(const float3& a, const float3& b) {
   return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
+#endif
 
 __device__ __host__ __forceinline__ float3 cross(const float3& a, const float3& b) {
   return make_float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);

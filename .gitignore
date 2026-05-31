@@ -1,4 +1,5 @@
 build/
+build-hip/
 deps/
 .project
 .cproject

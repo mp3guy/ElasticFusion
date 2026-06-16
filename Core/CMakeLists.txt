@@ -19,9 +19,9 @@ if(USE_HIP)
   # flow (nvcc -gencode); the .cu are added directly to the efusion target.
   enable_language(HIP)
 
-  # Never hardcode the lead arch: a literal here would override
-  # -DCMAKE_HIP_ARCHITECTURES and force every follower (gfx1100, gfx1151) to edit
-  # this file, churning the curated commit. Default the lead arch only when unset.
+  # Never hardcode the arch: a literal here would override
+  # -DCMAKE_HIP_ARCHITECTURES and force every other GPU target (gfx1100, gfx1151)
+  # to edit this file. Default the arch only when unset.
   if(NOT DEFINED CMAKE_HIP_ARCHITECTURES OR CMAKE_HIP_ARCHITECTURES STREQUAL "")
     set(CMAKE_HIP_ARCHITECTURES "gfx90a")
   endif()

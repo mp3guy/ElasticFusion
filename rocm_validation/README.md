@@ -1,7 +1,7 @@
 # ROCm/HIP validation for ElasticFusion
 
 This directory holds the GPU-correctness validation for the ElasticFusion
-CUDA-to-HIP port (lead platform: Linux gfx90a, MI250X, ROCm 7.2.x). It was
+CUDA-to-HIP port (Linux gfx90a, MI250X, ROCm 7.2.x). It was
 authored with the assistance of Claude (Anthropic).
 
 ## Why a custom harness (no GL replay)

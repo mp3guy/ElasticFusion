@@ -1,7 +1,7 @@
 /*
  * This file is part of the ElasticFusion ROCm/HIP port.
  *
- * CUDA-to-HIP compatibility shim (colmap-model Strategy A). On ROCm it includes
+ * CUDA-to-HIP compatibility shim. On ROCm it includes
  * the HIP runtime and aliases only the CUDA symbols ElasticFusion actually uses
  * to their 1:1 HIP equivalents; on NVIDIA it is a no-op include of the CUDA
  * runtime. This is the only file that knows about HIP. It is force-included on

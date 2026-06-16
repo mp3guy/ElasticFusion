@@ -129,7 +129,7 @@ static void test_resizeVMap() {
 
 // ---- icpStep: the SE3 wave64 reduction. Two identical clouds -> the JtJ must be
 //      symmetric, residual ~ 0 at identity, inliers = #valid pixels, and crucially
-//      two runs must be bit-identical (wave64 reduction determinism). ----
+//      two runs must be identical (wave64 reduction determinism). ----
 static double g_icp_sumA = 0, g_icp_sumB = 0;
 static int run_icpStep(float matA[36], float vecB[6], float resid[2]) {
   const int W = 64, H = 48;
@@ -171,7 +171,7 @@ static void test_icpStep() {
   CHECK(inl1 > 1000, "icpStep found many inlier correspondences");
   printf("  (inliers=%d residual=%.6g)\n", inl1, r1[0]);
 
-  // determinism: two runs bit-identical (this is the wave64 reduction fingerprint)
+  // determinism: two runs identical (this is the wave64 reduction fingerprint)
   int dbad = 0;
   for (int i = 0; i < 36; ++i) if (std::memcmp(&matA1[i], &matA2[i], 4)) ++dbad;
   for (int i = 0; i < 6; ++i)  if (std::memcmp(&vecB1[i], &vecB2[i], 4)) ++dbad;
@@ -185,7 +185,7 @@ static void test_icpStep() {
   CHECK(posdiag == 6, "all 6 JtJ diagonal entries positive (non-degenerate reduction)");
 }
 
-// ---- so3Step: the SO3 wave64 reduction. Two runs bit-identical. ----
+// ---- so3Step: the SO3 wave64 reduction. Two runs identical. ----
 static void test_so3Step() {
   printf("[so3Step SO3 wave64 reduction]\n");
   const int W = 64, H = 48;

@@ -36,7 +36,7 @@ include_directories(${Sophus_INCLUDE_DIR})
 # On AMD the host .cpp keep their <cuda_gl_interop.h>/<cuda_runtime_api.h>/
 # <driver_types.h>/<vector_types.h> includes; the hip_compat/ shims resolve those
 # toolkit names to the CUDA-to-HIP compat header. This dir is added only under
-# USE_HIP, so the NVIDIA build is byte-for-byte unchanged. The host C++ files that
+# USE_HIP, so the NVIDIA build is unchanged. The host C++ files that
 # touch the CUDA runtime (GPUTexture, RGBDOdometry, the container layer) compile
 # with the CXX compiler, so they need USE_HIP / __HIP_PLATFORM_AMD__ defined and
 # the ROCm include path to pick up the HIP host runtime.

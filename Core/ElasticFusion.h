@@ -37,7 +37,7 @@
 // Pangolin's glcuda.h is an unused include here (ElasticFusion does its own
 // GL/CUDA interop in GPUTexture/RGBDOdometry); on HIP it would pull Pangolin's
 // own CUDA-interop helpers, some of which have no 1:1 HIP symbol (e.g.
-// cudaGraphicsMapFlagsNone). Skip it on HIP; keep it byte-for-byte on CUDA.
+// cudaGraphicsMapFlagsNone). Skip it on HIP; keep it unchanged on CUDA.
 #if !defined(USE_HIP)
 #include <pangolin/gl/glcuda.h>
 #endif

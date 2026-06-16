@@ -46,8 +46,8 @@ on real gfx90a:
 - `tranformMaps` -- identity pose leaves the vmap bit-stable.
 - `resizeVMap` -- correct half-resolution averaging.
 - `icpStep` (SE3) -- the heaviest wave64 reduction: JtJ symmetric, positive
-  diagonal, residual 0 at identity, and **bit-identical across two runs**.
-- `so3Step` (SO3) -- wave64 reduction, **bit-identical across two runs**.
+  diagonal, residual 0 at identity, and **identical across two runs**.
+- `so3Step` (SO3) -- wave64 reduction, **identical across two runs**.
 - `computeRgbResidual` (int2) -- the int reduction count and sum-of-squares
   **exactly equal** a CPU recount of the device-written correspondences. Because
   integer addition is order-independent, this is a hard arithmetic proof that the

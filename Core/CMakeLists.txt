@@ -17,14 +17,10 @@ if(USE_HIP)
   # AMD path: compile the .cu translation units as the HIP language. This
   # replaces the legacy FindCUDA CUDA_COMPILE / CudaDetect / CudaComputeTargetFlags
   # flow (nvcc -gencode); the .cu are added directly to the efusion target.
+  # enable_language(HIP) honors an explicit -DCMAKE_HIP_ARCHITECTURES,
+  # otherwise auto-detects the host GPU(s) and errors on a no-GPU host, so no
+  # arch default is pinned here.
   enable_language(HIP)
-
-  # Never hardcode the arch: a literal here would override
-  # -DCMAKE_HIP_ARCHITECTURES and force every other GPU target (gfx1100, gfx1151)
-  # to edit this file. Default the arch only when unset.
-  if(NOT DEFINED CMAKE_HIP_ARCHITECTURES OR CMAKE_HIP_ARCHITECTURES STREQUAL "")
-    set(CMAKE_HIP_ARCHITECTURES "gfx90a")
-  endif()
 
   # Mark ONLY the .cu translation units LANGUAGE HIP. The glob also captures the
   # .cuh/.h headers; tagging a header LANGUAGE HIP would make CMake try to compile
